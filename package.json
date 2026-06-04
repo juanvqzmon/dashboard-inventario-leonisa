@@ -1,0 +1,14 @@
+{
+  "name": "dashboard-inventario-leonisa",
+  "version": "1.0.0",
+  "description": "Dashboard de Control de Inventario y Agotados - LEONISA",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "serve . -p $PORT --cors"
+  },
+  "dependencies": {
+    "serve": "^14.2.0"
+  }
+}

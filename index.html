@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard Control de Inventario y Agotados</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-tertiary-container": "#9a9c9d",
+            "surface": "#f8f9ff",
+            "error": "#ba1a1a",
+            "on-primary-fixed-variant": "#1f477b",
+            "outline": "#737780",
+            "on-error": "#ffffff",
+            "on-tertiary": "#ffffff",
+            "inverse-surface": "#213145",
+            "surface-variant": "#d3e4fe",
+            "on-surface-variant": "#43474f",
+            "inverse-on-surface": "#eaf1ff",
+            "tertiary-fixed-dim": "#c5c7c8",
+            "surface-container": "#e5eeff",
+            "secondary-fixed": "#cde5ff",
+            "surface-container-lowest": "#ffffff",
+            "surface-tint": "#3a5f94",
+            "on-surface": "#0b1c30",
+            "on-secondary-fixed-variant": "#004b74",
+            "secondary-fixed-dim": "#94ccff",
+            "on-tertiary-fixed": "#191c1d",
+            "surface-container-low": "#eff4ff",
+            "primary-fixed": "#d5e3ff",
+            "on-secondary": "#ffffff",
+            "on-secondary-container": "#004972",
+            "primary": "#001e40",
+            "background": "#f8f9ff",
+            "secondary-container": "#67bafd",
+            "on-primary": "#ffffff",
+            "tertiary": "#1c1f20",
+            "tertiary-container": "#313435",
+            "on-primary-fixed": "#001b3c",
+            "surface-dim": "#cbdbf5",
+            "on-secondary-fixed": "#001d32",
+            "primary-fixed-dim": "#a7c8ff",
+            "primary-container": "#003366",
+            "on-primary-container": "#799dd6",
+            "on-error-container": "#93000a",
+            "inverse-primary": "#a7c8ff",
+            "error-container": "#ffdad6",
+            "surface-container-highest": "#d3e4fe",
+            "on-tertiary-fixed-variant": "#454748",
+            "outline-variant": "#c3c6d1",
+            "on-background": "#0b1c30",
+            "secondary": "#006399",
+            "surface-bright": "#f8f9ff",
+            "tertiary-fixed": "#e1e3e4",
+            "surface-container-high": "#dce9ff"
+          },
+          borderRadius: {
+            DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem"
+          },
+          spacing: {
+            xs: "8px", xl: "48px", lg: "32px", md: "24px", base: "4px",
+            sm: "16px", "sidebar-width": "260px"
+          },
+          fontFamily: {
+            "headline-md": ["IBM Plex Sans"],
+            "headline-sm": ["IBM Plex Sans"],
+            "body-md": ["IBM Plex Sans"],
+            "label-caps": ["IBM Plex Sans"],
+            "display-lg": ["IBM Plex Sans"],
+            "body-lg": ["IBM Plex Sans"],
+            "data-mono": ["IBM Plex Mono"]
+          },
+          fontSize: {
+            "headline-md": ["24px", {lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600"}],
+            "label-caps": ["12px", {lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600"}],
+            "headline-sm": ["18px", {lineHeight: "24px", fontWeight: "600"}],
+            "body-md": ["14px", {lineHeight: "20px", fontWeight: "400"}],
+            "display-lg": ["36px", {lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700"}],
+            "body-lg": ["16px", {lineHeight: "24px", fontWeight: "400"}],
+            "data-mono": ["14px", {lineHeight: "20px", fontWeight: "500"}]
+          }
+        },
+      },
+    }
+</script>
+<style>
+    body { font-family: 'IBM Plex Sans', sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .zebra-table tr:nth-child(even) { background-color: #f8f9ff; }
+    .heatmap-cell:hover { outline: 2px solid #006399; z-index: 10; }
+    #drop-zone { transition: opacity 0.3s ease; }
+    #drop-zone.hidden { display: none; }
+    .filter-select { border: none; background: #eff4ff; border-radius: 4px; padding: 4px 8px; font-size: 14px; font-weight: 600; color: #001e40; }
+    .filter-select:focus { outline: none; box-shadow: 0 0 0 2px #67bafd; }
+    @media print {
+        @page { margin: 12mm; size: A4 landscape; }
+        #sidebar, #drop-zone, #global-search, #filters-bar, #btn-export-excel, #btn-export-pdf, [onclick] { display: none !important; }
+        #dashboard, #page-revision-cierre { margin-left: 0 !important; width: 100% !important; }
+        #dashboard { display: flex !important; }
+        .space-y-md > * { break-inside: avoid; }
+        .overflow-x-auto { overflow: visible !important; max-height: none !important; }
+        canvas { max-width: 100% !important; height: auto !important; }
+        .max-h-\[420px\] { max-height: none !important; }
+        #chartCierreTooltip { display: none !important; }
+        .divide-y > *:last-child { border-bottom: none; }
+    }
+</style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen">
+
+<!-- FILE UPLOAD OVERLAY -->
+<div id="drop-zone" class="fixed inset-0 z-50 flex items-center justify-center bg-surface">
+    <div class="text-center p-10 border-2 border-dashed border-outline rounded-xl w-96 transition-all duration-200 bg-white shadow-lg">
+        <div class="text-5xl mb-4 text-primary">
+            <span class="material-symbols-outlined text-6xl">database_upload</span>
+        </div>
+        <h2 class="text-2xl font-bold mb-2 text-primary">Cargar PLANTILLA VMI</h2>
+        <p class="text-xs text-outline mb-6">Formatos compatibles: <strong>.xlsm</strong> (con macros) o .xlsx</p>
+        <input type="file" id="file-input" class="opacity-0 absolute w-0 h-0" accept=".xlsm, .xlsx" />
+        <button id="upload-btn" class="bg-primary text-white px-6 py-2 rounded-lg hover:opacity-90 transition-opacity cursor-pointer">Subir Archivo</button>
+        <p id="loading-msg" class="hidden text-secondary font-semibold mt-4">Procesando archivo...</p>
+    </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside id="sidebar" class="fixed left-0 top-0 h-full w-[260px] bg-primary-container text-secondary-fixed shadow-md z-40 flex flex-col">
+    <div class="p-md">
+        <h1 class="font-headline-md text-headline-md font-bold text-surface">VMI</h1>
+        <p class="font-label-caps text-label-caps text-on-primary-container">LEONISA</p>
+    </div>
+    <nav class="flex-1 mt-md">
+        <a class="flex items-center gap-4 px-6 py-4 text-secondary-fixed border-l-4 border-secondary-container bg-on-primary-fixed-variant/10 transition-opacity" href="#">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span class="font-label-caps text-label-caps uppercase">Dashboard</span>
+        </a>
+        <a class="flex items-center gap-4 px-6 py-4 text-secondary-fixed border-l-4 border-transparent hover:bg-on-primary-fixed-variant/5 transition-all cursor-pointer" href="#" id="btn-revision-cierre">
+            <span class="material-symbols-outlined">warning</span>
+            <span class="font-label-caps text-label-caps uppercase">Revisión Cierre</span>
+        </a>
+    </nav>
+</aside>
+
+<!-- MAIN -->
+<main id="dashboard" class="ml-[260px] min-h-screen flex flex-col">
+    <!-- TOPBAR -->
+    <header class="flex justify-between items-center w-full h-16 px-md bg-surface border-b border-outline-variant z-30 sticky top-0">
+        <div class="flex items-center gap-4">
+            <h2 class="font-headline-sm text-headline-sm font-bold text-primary">Dashboard Control de Inventario y Agotados</h2>
+            <div class="h-6 w-[1px] bg-outline-variant"></div>
+            <p class="font-body-md text-body-md text-on-surface-variant" id="last-updated">Cargue un archivo para empezar</p>
+        </div>
+        <div class="flex items-center gap-sm">
+            <div class="relative">
+                <input id="global-search" class="pl-10 pr-4 py-1.5 rounded-lg border border-outline-variant bg-surface-container-low text-body-md focus:ring-2 focus:ring-secondary focus:outline-none w-64 transition-all" placeholder="Buscar referencia..." type="text"/>
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+            </div>
+            <button onclick="location.reload()" class="p-2 text-on-surface-variant hover:text-primary transition-colors" title="Cambiar archivo">
+                <span class="material-symbols-outlined">upload_file</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- GLOBAL FILTERS -->
+    <div id="filters-bar" class="px-md py-sm bg-white border-b border-outline-variant flex flex-wrap gap-md items-center shadow-sm">
+        <div class="flex flex-col gap-1">
+            <label class="font-label-caps text-[10px] text-outline uppercase">Ref</label>
+            <div class="relative">
+                <input type="text" id="filter-ref" class="filter-select min-w-[120px]" placeholder="Buscar ref..." autocomplete="off" />
+                <div id="ref-dropdown" class="absolute top-full left-0 w-full bg-white border border-outline-variant rounded shadow-md max-h-60 overflow-y-auto hidden z-50"></div>
+            </div>
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="font-label-caps text-[10px] text-outline uppercase">Color</label>
+            <select id="filter-color" class="filter-select min-w-[120px]"><option value="__all__">Todos los colores</option></select>
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="font-label-caps text-[10px] text-outline uppercase"> </label>
+            <button id="btn-clear-filters" class="flex items-center gap-1.5 px-3 py-1.5 bg-on-error/10 text-error rounded-xl font-label-caps text-label-caps hover:bg-on-error/20 transition-colors">
+                <span class="material-symbols-outlined text-[16px]">close</span> Limpiar
+            </button>
+        </div>
+        <div class="ml-auto flex gap-2">
+            <button id="btn-export-excel" class="flex items-center gap-2 bg-secondary text-on-secondary px-4 py-2 rounded-xl font-label-caps text-label-caps hover:bg-on-secondary-fixed-variant transition-colors shadow-sm">
+                <span class="material-symbols-outlined text-[18px]">file_download</span> EXCEL
+            </button>
+            <button id="btn-export-pdf" class="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-xl font-label-caps text-label-caps hover:bg-on-primary-fixed-variant transition-colors shadow-sm">
+                <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span> PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- DASHBOARD CONTENT -->
+    <div class="p-md space-y-md">
+
+        <!-- KPIs -->
+        <div id="kpi-container" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-md">
+            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">TOTAL ITEM REF POR COLOR</p><p class="font-headline-md text-headline-md text-primary" id="kpi-total-refs">—</p></div>
+            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">Total Agotados</p><p class="font-headline-md text-headline-md text-error" id="kpi-total-agotados">—</p></div>
+            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">Tasa Agotados</p><p class="font-headline-md text-headline-md text-secondary" id="kpi-tasa">—</p></div>
+            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">Total Inventario</p><p class="font-headline-md text-headline-md text-primary" id="kpi-cierre">—</p></div>
+            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">Total de Cierre</p><p class="font-headline-md text-headline-md text-on-secondary-fixed-variant" id="kpi-promedio">—</p></div>
+            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">Tendencia</p><p class="font-headline-md text-headline-md text-secondary" id="kpi-registros">—</p></div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-md">
+            <!-- ALERTS PANEL -->
+            <div class="col-span-12 lg:col-span-3 bg-white rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant flex flex-col max-h-[420px]">
+                <div class="p-4 pb-0 flex-none">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-headline-sm text-headline-sm text-primary">Alertas Críticas</h3>
+                        <span id="alert-count" class="min-w-[26px] min-h-[26px] px-2 rounded-full text-[11px] font-bold flex items-center justify-center">0</span>
+                    </div>
+                    <div id="alerts-summary" class="flex flex-wrap gap-1.5 mb-3"></div>
+                </div>
+                <div id="alerts-body" class="divide-y divide-outline-variant flex-1 overflow-y-auto min-h-0 px-4"></div>
+                <div id="alerts-empty" class="hidden flex flex-col items-center justify-center flex-1 min-h-0">
+                    <span class="text-[48px] text-emerald-600 font-bold">✓</span>
+                    <p class="text-sm text-emerald-700 mt-3 font-semibold">Sin alertas críticas</p>
+                </div>
+            </div>
+
+            <!-- CIERRE POR COLOR -->
+            <div class="col-span-12 lg:col-span-5 bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant flex flex-col max-h-[420px]">
+                <h3 class="font-headline-sm text-headline-sm text-primary mb-2 flex-none">Cierre por Color</h3>
+                <div class="flex-1 min-h-0" style="position:relative">
+                    <canvas id="chartCierre" style="width:100%;height:100%;display:block"></canvas>
+                    <div id="chartCierreTooltip" class="hidden fixed z-50 bg-gray-900 text-white text-[11px] px-3 py-1.5 rounded-lg shadow-lg pointer-events-none font-data-mono whitespace-nowrap"></div>
+                </div>
+            </div>
+
+            <!-- REQUERIMIENTO FUTURAS CAMPAÑAS -->
+            <div class="col-span-12 lg:col-span-4 bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant flex flex-col max-h-[420px]">
+                <h3 class="font-headline-sm text-headline-sm text-primary mb-2 flex-none">Requerimiento Futuras Campañas</h3>
+                <div class="flex-1 min-h-0" style="position:relative"><canvas id="chartBars" style="width:100%;height:100%;display:block"></canvas></div>
+            </div>
+        </div>
+
+        <!-- MAIN TABLE -->
+        <div class="bg-white rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant overflow-hidden">
+            <div class="p-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low/50">
+                <h3 class="font-headline-sm text-headline-sm text-primary">Detalle de Inventario</h3>
+                <span class="text-xs text-outline" id="table-count">0 registros</span>
+            </div>
+            <div class="overflow-x-auto custom-scrollbar" style="max-height:500px">
+                <table class="w-full text-left zebra-table">
+                    <thead class="sticky top-0 z-10">
+                        <tr id="table-head" class="bg-surface border-b border-outline-variant font-label-caps text-label-caps text-outline uppercase"></tr>
+                    </thead>
+                    <tbody id="table-body" class="text-body-md"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- BOTTOM -->
+        <div class="grid grid-cols-12 gap-md">
+            <div class="col-span-12 lg:col-span-8 bg-white rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant p-md">
+                <h3 class="font-headline-sm text-headline-sm text-primary mb-4">Top 20 - Peor Stock</h3>
+                <div id="bottom-items" class="grid grid-cols-4 gap-4"></div>
+            </div>
+            <div class="col-span-12 lg:col-span-4 space-y-md">
+                <div class="bg-primary text-on-primary p-md rounded-xl shadow-lg relative overflow-hidden">
+                    <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-[100px] opacity-10">insights</span>
+                    <h4 class="font-label-caps text-label-caps uppercase opacity-80 mb-2">Insight</h4>
+                    <p class="font-headline-sm text-headline-sm leading-tight" id="insight-text">Cargue un archivo de datos para ver análisis inteligente.</p>
+                </div>
+                <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant border-l-4 border-secondary">
+                    <p class="font-label-caps text-[10px] text-outline uppercase mb-1">Recomendación</p>
+                    <p class="font-body-md text-primary font-semibold" id="recomendacion-text">Los datos mostrarán recomendaciones automáticas.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- REVISIÓN CIERRE PAGE -->
+<section id="page-revision-cierre" class="ml-[260px] min-h-screen flex-col hidden">
+    <header class="flex justify-between items-center w-full h-16 px-md bg-surface border-b border-outline-variant z-30 sticky top-0">
+        <div class="flex items-center gap-4">
+            <h2 class="font-headline-sm text-headline-sm font-bold text-primary">Revisión Cierre</h2>
+        </div>
+    </header>
+    <div class="flex-1 p-md space-y-md">
+        <div class="bg-white rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant p-md">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-headline-sm text-headline-sm text-primary">Detalle Revisión Cierre</h3>
+                <span class="text-body-md text-outline" id="rev-table-count">0 registros</span>
+            </div>
+            <div class="overflow-x-auto custom-scrollbar" style="max-height:500px">
+                <table class="w-full text-left zebra-table">
+                    <thead class="sticky top-0 z-10">
+                        <tr class="bg-surface border-b border-outline-variant font-label-caps text-label-caps text-outline uppercase">
+                            <th class="px-md py-4 whitespace-nowrap">ES VMI</th>
+                            <th class="px-md py-4 whitespace-nowrap">ESTADO</th>
+                            <th class="px-md py-4 whitespace-nowrap">REF</th>
+                            <th class="px-md py-4 whitespace-nowrap">COLOR</th>
+                            <th class="px-md py-4 whitespace-nowrap">TALLA</th>
+                            <th class="px-md py-4 whitespace-nowrap">DESCRIPCION</th>
+                            <th class="px-md py-4 whitespace-nowrap">TENDENCIA</th>
+                            <th class="px-md py-4 whitespace-nowrap">CUMPLIMIENTO</th>
+                            <th class="px-md py-4 whitespace-nowrap text-right">AGOT</th>
+                            <th class="px-md py-4 whitespace-nowrap text-right">INVENTARIO</th>
+                            <th class="px-md py-4 whitespace-nowrap text-right">CIERRE</th>
+                            <th class="px-md py-4 whitespace-nowrap text-right">TEND DIA</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rev-table-body" class="text-body-md"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script src="app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const btnDash = document.querySelector('#sidebar a[href="#"]');
+    const btnRev = document.getElementById('btn-revision-cierre');
+    const pageDash = document.getElementById('dashboard');
+    const pageRev = document.getElementById('page-revision-cierre');
+
+    function showPage(page) {
+        pageDash.classList.toggle('hidden', page !== 'dashboard');
+        pageDash.classList.toggle('flex', page === 'dashboard');
+        pageRev.classList.toggle('hidden', page !== 'revision');
+        pageRev.classList.toggle('flex-col', page === 'revision');
+        btnDash.classList.toggle('border-secondary-container', page === 'dashboard');
+        btnDash.classList.toggle('bg-on-primary-fixed-variant/10', page === 'dashboard');
+        btnRev.classList.toggle('border-secondary-container', page === 'revision');
+        btnRev.classList.toggle('bg-on-primary-fixed-variant/10', page === 'revision');
+        if (page === 'dashboard' && typeof redrawBarChart === 'function') {
+            setTimeout(() => { redrawBarChart(); if (typeof redrawCierreChart === 'function') redrawCierreChart(); }, 50);
+        }
+    }
+
+    btnDash.addEventListener('click', (e) => { e.preventDefault(); showPage('dashboard'); });
+    btnRev.addEventListener('click', (e) => { e.preventDefault(); showPage('revision'); });
+});
+</script>
+</body>
+</html>
