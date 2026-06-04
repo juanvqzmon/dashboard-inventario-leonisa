@@ -423,7 +423,23 @@ function renderKPIs(columns, colRef, colStock, colCierre, colColor, vColor, colA
     console.log('totalCierre (agrupado):', totalCierreGrupos, '| totalCierre (simple):', totalCierreSimple);
     const totalCierre = totalCierreGrupos;
 
-    document.getElementById('kpi-total-refs').textContent = totalRefs.toLocaleString();
+    document.getElementById('kpi-total-refs').textContent = (() => {
+        const knownKeys = new Set(['__stock', '__agotados', '__estado', '__prioridad', '__cierre']);
+        let cCols = columns.filter(c => {
+            const norm = c.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            return /c\d+/.test(norm) && !knownKeys.has(c);
+        });
+        cCols.sort((a, b) => parseInt(String(a).match(/\d+/)) - parseInt(String(b).match(/\d+/)));
+        const colRange = columns.slice(15, 20);
+        cCols = cCols.filter(c => colRange.includes(c));
+        const total = cCols.reduce((sum, col) => {
+            return sum + filteredData.reduce((s, row) => {
+                const v = Number(String(row[col] ?? '').replace(/[^0-9.,\-]/g, '').replace(',', '.'));
+                return s + (isNaN(v) ? 0 : v);
+            }, 0);
+        }, 0);
+        return Math.round(total).toLocaleString();
+    })();
     document.getElementById('kpi-total-agotados').textContent = Math.round(totalAgotados).toLocaleString();
     document.getElementById('kpi-tasa').textContent = tasa.toFixed(2) + '%';
     document.getElementById('kpi-cierre').textContent = Math.round(totalInventario).toLocaleString();
