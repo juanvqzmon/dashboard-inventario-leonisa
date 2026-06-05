@@ -583,11 +583,30 @@ function renderRevisionTable(colRef, colColor, colDesc, colStock, colCierre, col
     const colTendencia = findColumn(COLUMN_ALIASES.tendencia, cols) || findColumnLoose(COLUMN_ALIASES.tendencia, cols);
     const colCumplimiento = findColumn(COLUMN_ALIASES.cumplimiento, cols) || findColumnLoose(COLUMN_ALIASES.cumplimiento, cols);
     const colTendDia = findColumn(COLUMN_ALIASES.tend_dia, cols) || findColumnLoose(COLUMN_ALIASES.tend_dia, cols);
+    const colPryC8 = cols.slice(15, 20).find(c => /c\d+/i.test(c));
+    const colDiasInv = cols.find(c => /dias.*inventario|días.*inventario|inv.*dia/i.test(c));
+
+    function parseNum(v) {
+        const n = Number(String(v ?? '').replace(/[^0-9.\-]/g, '').replace(',', '.'));
+        return isNaN(n) ? 0 : n;
+    }
+
+    // Filter only rows that belong to the 3 export groups
+    const revRows = [];
+    filteredData.forEach(r => {
+        const tend = colTendencia ? parseNum(r[colTendencia]) : 0;
+        const cierre = colCierre ? parseNum(r[colCierre]) : 0;
+        let grupo = '';
+        if (tend > 0 && cierre < 0) grupo = 'Tend+ Cierre-';
+        else if (tend < 0 && cierre > 0) grupo = 'Tend- Cierre+';
+        else if (tend < 0 && cierre < 0) grupo = 'Tend- Cierre-';
+        if (grupo) revRows.push({ row: r, grupo });
+    });
 
     const tbody = document.getElementById('rev-table-body');
-    document.getElementById('rev-table-count').textContent = filteredData.length + ' registros';
+    document.getElementById('rev-table-count').textContent = revRows.length + ' registros';
 
-    tbody.innerHTML = filteredData.map(row => {
+    tbody.innerHTML = revRows.map(({ row, grupo }) => {
         const ref = colRef ? (row[colRef] ?? '') : '';
         const color = colColor ? (row[colColor] ?? '') : '';
         const desc = colDesc ? (row[colDesc] ?? '') : '';
@@ -601,8 +620,11 @@ function renderRevisionTable(colRef, colColor, colDesc, colStock, colCierre, col
         const tendencia = colTendencia ? (row[colTendencia] ?? '') : '';
         const cumplimiento = colCumplimiento ? (row[colCumplimiento] ?? '') : '';
         const tendDia = colTendDia ? (row[colTendDia] ?? '') : '';
+        const pryC8 = colPryC8 ? (row[colPryC8] ?? '') : '';
+        const diasInv = colDiasInv ? (row[colDiasInv] ?? '') : '';
 
         const estColor = getEstadoColor(estadoCode);
+        const grupoColor = grupo === 'Tend+ Cierre-' ? '#ef4444' : grupo === 'Tend- Cierre+' ? '#f59e0b' : '#6b7280';
 
         return `<tr class="hover:bg-surface-container transition-colors">
             <td class="px-md py-3 whitespace-nowrap">${esVmi}</td>
@@ -614,13 +636,16 @@ function renderRevisionTable(colRef, colColor, colDesc, colStock, colCierre, col
             <td class="px-md py-3 whitespace-nowrap">${talla}</td>
             <td class="px-md py-3 whitespace-nowrap">${desc}</td>
             <td class="px-md py-3 whitespace-nowrap">${tendencia}</td>
+            <td class="px-md py-3 whitespace-nowrap">${pryC8}</td>
             <td class="px-md py-3 whitespace-nowrap">${cumplimiento}</td>
             <td class="px-md py-3 whitespace-nowrap text-right font-data-mono">${agot}</td>
             <td class="px-md py-3 whitespace-nowrap text-right font-data-mono">${stock}</td>
             <td class="px-md py-3 whitespace-nowrap text-right font-data-mono">${cierre}</td>
+            <td class="px-md py-3 whitespace-nowrap text-right">${diasInv}</td>
             <td class="px-md py-3 whitespace-nowrap text-right">${tendDia}</td>
+            <td class="px-md py-3 whitespace-nowrap text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold text-white" style="background:${grupoColor}">${grupo}</span></td>
         </tr>`;
-    }).join('') || '<tr><td colspan="12" class="text-center p-4 text-outline">Sin resultados</td></tr>';
+    }).join('') || '<tr><td colspan="15" class="text-center p-4 text-outline">Sin resultados</td></tr>';
 }
 
 // ─── REVISION DASHBOARD ──────────────────────────────────────
