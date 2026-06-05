@@ -383,6 +383,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (page === 'dashboard' && typeof redrawBarChart === 'function') {
             setTimeout(() => { redrawBarChart(); if (typeof redrawCierreChart === 'function') redrawCierreChart(); }, 50);
         }
+        if (page === 'revision' && typeof window.__revDashData !== 'undefined') {
+            setTimeout(() => {
+                const d = window.__revDashData;
+                renderRevisionDashboard(d.colRef, d.colColor, d.colStock, d.colCierre, d.colAgotados, d.cols);
+            }, 50);
+        }
     }
 
     btnDash.addEventListener('click', (e) => { e.preventDefault(); showPage('dashboard'); });

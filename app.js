@@ -625,6 +625,7 @@ function renderRevisionTable(colRef, colColor, colDesc, colStock, colCierre, col
 
 // ─── REVISION DASHBOARD ──────────────────────────────────────
 function renderRevisionDashboard(colRef, colColor, colStock, colCierre, colAgotados, cols) {
+    window.__revDashData = { colRef, colColor, colStock, colCierre, colAgotados, cols };
     const colTendencia = findColumn(COLUMN_ALIASES.tendencia, cols) || findColumnLoose(COLUMN_ALIASES.tendencia, cols);
 
     function parseNum(v) {
