@@ -101,6 +101,17 @@ function getPrioridad(stock) {
 
 // ─── FILE UPLOAD ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    // Auto-load data from sessionStorage if returning from pendientes.html
+    const savedData = sessionStorage.getItem('vmi_data');
+    if (savedData) {
+        try {
+            allData = JSON.parse(savedData);
+            document.getElementById('drop-zone').classList.add('hidden');
+            document.getElementById('last-updated').textContent = 'Datos cargados';
+            buildDashboard();
+        } catch(e) { sessionStorage.removeItem('vmi_data'); }
+    }
+
     const fileInput = document.getElementById('file-input');
     const uploadBtn = document.getElementById('upload-btn');
     const loadingMsg = document.getElementById('loading-msg');
@@ -145,6 +156,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 allData = jsonData;
                 document.getElementById('drop-zone').classList.add('hidden');
+                // Save to sessionStorage so it persists when coming back from pendientes.html
+                try { sessionStorage.setItem('vmi_data', JSON.stringify(allData)); } catch(e) {}
+                sessionStorage.setItem('vmi_columns', JSON.stringify(Object.keys(allData[0])));
 
                 const now = new Date();
                 document.getElementById('last-updated').textContent =

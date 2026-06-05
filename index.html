@@ -169,7 +169,7 @@
                 <input id="global-search" class="pl-10 pr-4 py-1.5 rounded-lg border border-outline-variant bg-surface-container-low text-body-md focus:ring-2 focus:ring-secondary focus:outline-none w-64 transition-all" placeholder="Buscar referencia..." type="text"/>
                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
             </div>
-            <button onclick="location.reload()" class="p-2 text-on-surface-variant hover:text-primary transition-colors" title="Cambiar archivo">
+            <button onclick="sessionStorage.removeItem('vmi_data');sessionStorage.removeItem('vmi_columns');location.reload()" class="p-2 text-on-surface-variant hover:text-primary transition-colors" title="Cambiar archivo">
                 <span class="material-symbols-outlined">upload_file</span>
             </button>
         </div>
