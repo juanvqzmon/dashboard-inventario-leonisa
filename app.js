@@ -101,21 +101,6 @@ function getPrioridad(stock) {
 
 // ─── FILE UPLOAD ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    // Auto-load data from sessionStorage if returning from pendientes.html
-    const savedData = sessionStorage.getItem('vmi_data');
-    if (savedData) {
-        try {
-            allData = JSON.parse(savedData);
-            document.getElementById('drop-zone').classList.add('hidden');
-            document.getElementById('last-updated').textContent = 'Datos cargados';
-            buildDashboard();
-        } catch(e) {
-            console.warn('Error al restaurar datos:', e);
-            sessionStorage.removeItem('vmi_data');
-            sessionStorage.removeItem('vmi_columns');
-        }
-    }
-
     const fileInput = document.getElementById('file-input');
     const uploadBtn = document.getElementById('upload-btn');
     const loadingMsg = document.getElementById('loading-msg');
@@ -160,11 +145,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 allData = jsonData;
                 document.getElementById('drop-zone').classList.add('hidden');
-                try { const s = JSON.stringify(allData); sessionStorage.setItem('vmi_data', s); sessionStorage.setItem('vmi_columns', JSON.stringify(Object.keys(allData[0]))); } catch(e) { console.warn('No se pudo guardar en sessionStorage (datos muy grandes).'); }
 
                 const now = new Date();
-                document.getElementById('last-updated').textContent =
-                    `Última actualización: ${now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
+                const label = `Última actualización: ${now.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`;
+                document.getElementById('last-updated').textContent = label;
+
+                lsSave('main-data', { data: allData, columns: Object.keys(allData[0]), label, timestamp: Date.now() });
 
                 buildDashboard();
                 loadingMsg.classList.add('hidden');

@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
 <title>Dashboard Control de Inventario y Agotados</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -103,6 +106,24 @@
     #drop-zone.hidden { display: none; }
     .filter-select { border: none; background: #eff4ff; border-radius: 4px; padding: 4px 8px; font-size: 14px; font-weight: 600; color: #001e40; }
     .filter-select:focus { outline: none; box-shadow: 0 0 0 2px #67bafd; }
+    .btn-p { cursor: pointer; transition: .2s; display: inline-flex; align-items: center; gap: 6px; }
+    #page-pendientes .p-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); transition: .2s; }
+    #page-pendientes .p-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.12); transform: translateY(-1px); }
+    #page-pendientes .p-filter { border:1px solid #e2e8f0; border-radius:8px; padding:6px 10px; font-size:13px; background:white; width:100%; }
+    #page-pendientes.p-dark { background: #0f172a; color: #e2e8f0; }
+    #page-pendientes.p-dark .p-card { background: #1e293b !important; box-shadow: 0 1px 3px rgba(0,0,0,.3) !important; }
+    #page-pendientes.p-dark .p-filter { background: #1e293b; border-color: #475569; color: #e2e8f0; }
+    #page-pendientes.p-dark .text-gray-500 { color: #94a3b8 !important; }
+    #page-pendientes.p-dark .text-gray-900 { color: #f1f5f9 !important; }
+    #page-pendientes.p-dark .bg-white { background: #1e293b !important; }
+    #page-pendientes.p-dark .border-gray-200 { border-color: #334155 !important; }
+    #page-pendientes.p-dark #p-drop-zone { background: #1e293b; border-color: #475569; }
+    #page-pendientes .dataTables_wrapper .dataTables_filter input { border: 1px solid #e2e8f0 !important; border-radius: 8px !important; padding: 6px 12px !important; }
+    #page-pendientes.p-dark .dataTables_wrapper .dataTables_filter input { background: #1e293b; border-color: #475569 !important; color: #e2e8f0; }
+    #page-pendientes.p-dark .dataTables_wrapper .dataTables_length select { background: #1e293b; color: #e2e8f0; border-color: #475569; }
+    #page-pendientes.p-dark table.dataTable { color: #e2e8f0; }
+    #page-pendientes.p-dark table.dataTable tbody tr { background: #1e293b; }
+    #page-pendientes.p-dark table.dataTable tbody tr:hover { background: #334155; }
     @media print {
         @page { margin: 12mm; size: A4 landscape; }
         #sidebar, #drop-zone, #global-search, #filters-bar, #btn-export-excel, #btn-export-pdf, [onclick] { display: none !important; }
@@ -119,6 +140,8 @@
 </head>
 <body class="bg-background text-on-background font-body-md min-h-screen">
 
+<input type="file" id="file-input" class="hidden" accept=".xlsm, .xlsx" />
+
 <!-- FILE UPLOAD OVERLAY -->
 <div id="drop-zone" class="fixed inset-0 z-50 flex items-center justify-center bg-surface">
     <div class="text-center p-10 border-2 border-dashed border-outline rounded-xl w-96 transition-all duration-200 bg-white shadow-lg">
@@ -127,7 +150,6 @@
         </div>
         <h2 class="text-2xl font-bold mb-2 text-primary">Cargar PLANTILLA VMI</h2>
         <p class="text-xs text-outline mb-6">Formatos compatibles: <strong>.xlsm</strong> (con macros) o .xlsx</p>
-        <input type="file" id="file-input" class="opacity-0 absolute w-0 h-0" accept=".xlsm, .xlsx" />
         <button id="upload-btn" class="bg-primary text-white px-6 py-2 rounded-lg hover:opacity-90 transition-opacity cursor-pointer">Subir Archivo</button>
         <p id="loading-msg" class="hidden text-secondary font-semibold mt-4">Procesando archivo...</p>
     </div>
@@ -148,7 +170,7 @@
             <span class="material-symbols-outlined">warning</span>
             <span class="font-label-caps text-label-caps uppercase">Revisión Cierre</span>
         </a>
-        <a class="flex items-center gap-4 px-6 py-4 text-secondary-fixed border-l-4 border-transparent hover:bg-on-primary-fixed-variant/5 transition-all cursor-pointer" href="pendientes.html">
+        <a class="flex items-center gap-4 px-6 py-4 text-secondary-fixed border-l-4 border-transparent hover:bg-on-primary-fixed-variant/5 transition-all cursor-pointer" href="#" id="btn-pendientes">
             <span class="material-symbols-outlined">pending_actions</span>
             <span class="font-label-caps text-label-caps uppercase">Pendiente por Facturar Busint</span>
         </a>
@@ -169,8 +191,11 @@
                 <input id="global-search" class="pl-10 pr-4 py-1.5 rounded-lg border border-outline-variant bg-surface-container-low text-body-md focus:ring-2 focus:ring-secondary focus:outline-none w-64 transition-all" placeholder="Buscar referencia..." type="text"/>
                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
             </div>
-            <button onclick="sessionStorage.removeItem('vmi_data');sessionStorage.removeItem('vmi_columns');location.reload()" class="p-2 text-on-surface-variant hover:text-primary transition-colors" title="Cambiar archivo">
-                <span class="material-symbols-outlined">upload_file</span>
+            <button onclick="document.getElementById('file-input').click()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-on-surface-variant hover:text-primary border border-outline-variant rounded-lg transition-colors" title="Cargar archivo">
+                <span class="material-symbols-outlined text-lg">upload_file</span> Cargar Archivo
+            </button>
+            <button onclick="toggleGlobalTheme()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-on-surface-variant hover:text-primary border border-outline-variant rounded-lg transition-colors" title="Modo oscuro">
+                <span class="material-symbols-outlined text-lg" id="global-theme-icon">dark_mode</span>
             </button>
         </div>
     </header>
@@ -370,23 +395,162 @@
     </div>
 </section>
 
-<script src="app.js"></script>
+<!-- PENDIENTES PAGE -->
+<section id="page-pendientes" class="ml-[260px] min-h-screen flex-col hidden bg-[#f1f5f9]">
+    <header class="flex items-center justify-between w-full h-16 px-6 bg-white border-b border-gray-200 z-30 sticky top-0">
+        <div>
+            <h2 class="text-xl font-bold text-gray-900">Pendiente por Facturar Busint</h2>
+            <p class="text-xs text-gray-500" id="p-status-msg">Cargue un archivo Excel para comenzar</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <button class="btn-p text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50" onclick="document.getElementById('p-file-input').click()">
+                <span class="material-symbols-outlined text-lg">upload</span> Cargar archivo
+            </button>
+            <button class="btn-p text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50" onclick="togglePTheme()">
+                <span class="material-symbols-outlined text-lg" id="p-theme-icon">dark_mode</span>
+            </button>
+            <button class="btn-p text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50" onclick="clearPendientes()">
+                <span class="material-symbols-outlined text-lg">filter_alt_off</span> Limpiar
+            </button>
+        </div>
+    </header>
+
+    <input type="file" id="p-file-input" class="hidden" accept=".xlsx,.xlsm,.xls" onchange="if (this.files[0]) loadPFile(this.files[0])"/>
+
+    <div id="p-drop-zone" class="text-center py-12 px-5 mx-4 mt-4 border-2 border-dashed border-gray-300 rounded-2xl bg-white cursor-pointer shadow-sm" onclick="document.getElementById('p-file-input').click()">
+        <span class="material-symbols-outlined text-5xl text-blue-500 mb-2">cloud_upload</span>
+        <p class="font-bold text-lg">Cargar archivo Excel</p>
+        <p class="text-xs text-gray-500 mb-3">Arrastra aquí o haz clic para seleccionar</p>
+        <button class="btn-p px-4 py-2 bg-blue-700 text-white rounded-lg font-semibold text-sm" onclick="event.stopPropagation();document.getElementById('p-file-input').click()">Seleccionar Archivo</button>
+        <p class="text-xs text-gray-400 mt-2">Formato: .xlsx</p>
+    </div>
+
+    <div class="flex gap-4 px-6 pt-4 bg-white border-b border-gray-200">
+        <a href="#" onclick="return showPTab('dashboard')" id="p-tab-dash-btn" class="pb-2 border-b-2 border-blue-600 font-semibold text-sm text-blue-600">Dashboard</a>
+        <a href="#" onclick="return showPTab('data')" id="p-tab-data-btn" class="pb-2 border-b-2 border-transparent font-semibold text-sm text-gray-500">Detalle</a>
+    </div>
+
+    <div id="p-tab-dashboard" class="flex-1 p-4 space-y-4">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4" id="p-kpi-row">
+            <div class="p-card"><p class="text-xs font-semibold text-gray-500 uppercase mb-1">Total Facturación Pendiente</p><p class="text-2xl font-extrabold text-blue-700" id="p-kpi-facturacion">—</p></div>
+            <div class="p-card"><p class="text-xs font-semibold text-gray-500 uppercase mb-1">Total Pedidos</p><p class="text-2xl font-extrabold text-gray-900" id="p-kpi-pedidos">—</p></div>
+            <div class="p-card"><p class="text-xs font-semibold text-gray-500 uppercase mb-1">Total Clientes</p><p class="text-2xl font-extrabold text-gray-900" id="p-kpi-clientes">—</p></div>
+            <div class="p-card"><p class="text-xs font-semibold text-gray-500 uppercase mb-1">Total Unidades</p><p class="text-2xl font-extrabold text-gray-900" id="p-kpi-unidades">—</p></div>
+            <div class="p-card"><p class="text-xs font-semibold text-gray-500 uppercase mb-1">Ticket Promedio</p><p class="text-2xl font-extrabold text-emerald-600" id="p-kpi-ticket">—</p></div>
+            <div class="p-card"><p class="text-xs font-semibold text-gray-500 uppercase mb-1">Valor Prom. x Cliente</p><p class="text-2xl font-extrabold text-red-600" id="p-kpi-valor-cliente">—</p></div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 p-4 bg-white rounded-xl shadow-sm" id="p-filters-panel">
+            <div><label class="text-xs font-semibold text-gray-500 block mb-1">Mes Desp</label><select id="p-f-mes" class="p-filter"><option value="__all__">Todos</option></select></div>
+            <div><label class="text-xs font-semibold text-gray-500 block mb-1">Cliente</label><select id="p-f-cliente" class="p-filter"><option value="__all__">Todos</option></select></div>
+            <div><label class="text-xs font-semibold text-gray-500 block mb-1">Zona</label><select id="p-f-zona" class="p-filter"><option value="__all__">Todos</option></select></div>
+            <div><label class="text-xs font-semibold text-gray-500 block mb-1">Tipo Cliente</label><select id="p-f-tipo" class="p-filter"><option value="__all__">Todos</option></select></div>
+            <div><label class="text-xs font-semibold text-gray-500 block mb-1">Línea</label><select id="p-f-linea" class="p-filter"><option value="__all__">Todos</option></select></div>
+            <div><label class="text-xs font-semibold text-gray-500 block mb-1">Colección</label><select id="p-f-coleccion" class="p-filter"><option value="__all__">Todos</option></select></div>
+            <div><label class="text-xs font-semibold text-gray-500 block mb-1">Color</label><select id="p-f-color" class="p-filter"><option value="__all__">Todos</option></select></div>
+            <div><label class="text-xs font-semibold text-gray-500 block mb-1">Buscar</label><input type="text" id="p-f-search" class="p-filter" placeholder="Buscar..."/></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="p-card"><h4 class="font-bold text-sm mb-3">Top 10 Clientes por Facturación</h4><div class="relative h-[300px]"><canvas id="p-chart-top-clientes"></canvas></div></div>
+            <div class="p-card"><h4 class="font-bold text-sm mb-3">Facturación por Mes</h4><div class="relative h-[300px]"><canvas id="p-chart-mes"></canvas></div></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="p-card"><h4 class="font-bold text-sm mb-3">Facturación por Zona</h4><div class="relative h-[300px]"><canvas id="p-chart-zona"></canvas></div></div>
+            <div class="p-card"><h4 class="font-bold text-sm mb-3">Facturación por Línea</h4><div class="relative h-[300px]"><canvas id="p-chart-linea"></canvas></div></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="p-card"><h4 class="font-bold text-sm mb-3">Evolución Temporal de Pedidos</h4><div class="relative h-[300px]"><canvas id="p-chart-evolucion"></canvas></div></div>
+            <div class="p-card"><h4 class="font-bold text-sm mb-3">Top 10 Referencias</h4><div class="relative h-[300px]"><canvas id="p-chart-refs"></canvas></div></div>
+        </div>
+
+        <div class="p-card">
+            <h4 class="font-bold text-sm mb-2">Resumen Ejecutivo</h4>
+            <p class="text-xs text-gray-500" id="p-resumen-text">Cargue datos para ver el análisis automático.</p>
+        </div>
+    </div>
+
+    <div id="p-tab-data" class="hidden flex-1 p-4">
+        <div class="p-card overflow-x-auto">
+            <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+                <h4 class="font-bold text-sm">Detalle de Pedidos Pendientes</h4>
+                <div class="flex gap-2">
+                    <button class="btn-p text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50" onclick="exportPTableExcel()"><span class="material-symbols-outlined text-lg">file_download</span> Excel</button>
+                    <button class="btn-p text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50" onclick="exportPTableCSV()"><span class="material-symbols-outlined text-lg">table</span> CSV</button>
+                </div>
+            </div>
+            <table id="p-main-table" class="display w-full text-sm">
+                <thead><tr id="p-table-head"></tr></thead>
+                <tbody id="p-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
 <script>
+// ─── LOCALSTORAGE PERSISTENCE ───────────────────────────────────
+// Simple, synchronous, survives F5 (across page refreshes)
+const LS_PREFIX = 'vmi_';
+
+function lsSave(key, val) {
+    try {
+        const raw = JSON.stringify(val);
+        if (raw.length > 4000000) { console.warn("Data too large for localStorage:", raw.length); return false; }
+        localStorage.setItem(LS_PREFIX + key, raw);
+        return true;
+    } catch(e) { console.warn("localStorage save error:", e); return false; }
+}
+function lsLoad(key) {
+    try {
+        const raw = localStorage.getItem(LS_PREFIX + key);
+        return raw ? JSON.parse(raw) : null;
+    } catch(e) { console.warn("localStorage load error:", e); return null; }
+}
+function lsRemove(key) { try { localStorage.removeItem(LS_PREFIX + key); } catch(e) {} }
+</script>
+<script src="app.js?v=3"></script>
+<script>
+// ─── AUTO-RESTORE on page load ─────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    // Restore main dashboard data
+    const saved = lsLoad('main-data');
+    if (saved && saved.data && saved.data.length) {
+        allData = saved.data;
+        document.getElementById('drop-zone').classList.add('hidden');
+        document.getElementById('last-updated').textContent = saved.label || 'Datos cargados';
+        buildDashboard();
+    }
+
+    // Restore pendientes data
+    const pSaved = lsLoad('pendientes-data');
+    if (pSaved && pSaved.allData && pSaved.allData.length) {
+        pAllData = pSaved.allData;
+        pColMap = pSaved.colMap || {};
+    }
+
+    // ─── PAGE NAVIGATION ───────────────────────────────────────
     const btnDash = document.querySelector('#sidebar a[href="#"]');
     const btnRev = document.getElementById('btn-revision-cierre');
+    const btnPen = document.getElementById('btn-pendientes');
     const pageDash = document.getElementById('dashboard');
     const pageRev = document.getElementById('page-revision-cierre');
+    const pagePen = document.getElementById('page-pendientes');
 
     function showPage(page) {
         pageDash.classList.toggle('hidden', page !== 'dashboard');
         pageDash.classList.toggle('flex', page === 'dashboard');
         pageRev.classList.toggle('hidden', page !== 'revision');
         pageRev.classList.toggle('flex-col', page === 'revision');
+        pagePen.classList.toggle('hidden', page !== 'pendientes');
+        pagePen.classList.toggle('flex-col', page === 'pendientes');
         btnDash.classList.toggle('border-secondary-container', page === 'dashboard');
         btnDash.classList.toggle('bg-on-primary-fixed-variant/10', page === 'dashboard');
         btnRev.classList.toggle('border-secondary-container', page === 'revision');
         btnRev.classList.toggle('bg-on-primary-fixed-variant/10', page === 'revision');
+        btnPen.classList.toggle('border-secondary-container', page === 'pendientes');
+        btnPen.classList.toggle('bg-on-primary-fixed-variant/10', page === 'pendientes');
         if (page === 'dashboard' && typeof redrawBarChart === 'function') {
             setTimeout(() => { redrawBarChart(); if (typeof redrawCierreChart === 'function') redrawCierreChart(); }, 50);
         }
@@ -396,11 +560,299 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderRevisionDashboard(d.colRef, d.colColor, d.colStock, d.colCierre, d.colAgotados, d.cols);
             }, 50);
         }
+        if (page === 'pendientes') {
+            initPendientes();
+            setTimeout(() => {
+                if (pAllData.length && Object.keys(pCharts).length === 0) {
+                    loadPDeps(() => {
+                        populatePFilters();
+                        applyPFilters();
+                    });
+                } else {
+                    Object.values(pCharts).forEach(c => { if (c) c.resize(); });
+                    if (pDataTable) { try { pDataTable.columns.adjust().draw(); } catch(e) {} }
+                }
+            }, 100);
+        }
     }
 
-    btnDash.addEventListener('click', (e) => { e.preventDefault(); showPage('dashboard'); });
-    btnRev.addEventListener('click', (e) => { e.preventDefault(); showPage('revision'); });
+    btnDash.addEventListener('click', (e) => { e.preventDefault(); showPage('dashboard'); location.hash = 'dashboard'; });
+    btnRev.addEventListener('click', (e) => { e.preventDefault(); showPage('revision'); location.hash = 'revision'; });
+    btnPen.addEventListener('click', (e) => { e.preventDefault(); showPage('pendientes'); location.hash = 'pendientes'; });
+
+    // Hash-based navigation (for redirects from pendientes.html)
+    if (location.hash === '#pendientes') showPage('pendientes');
+    window.addEventListener('hashchange', () => {
+        if (location.hash === '#pendientes') showPage('pendientes');
+        else if (location.hash === '#revision') showPage('revision');
+        else if (!location.hash || location.hash === '#dashboard') showPage('dashboard');
+    });
 });
+
+// ─── GLOBAL DARK MODE ─────────────────────────────────────────
+function toggleGlobalTheme() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    document.getElementById('global-theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+    try { localStorage.setItem('vmi_dark', isDark ? '1' : '0'); } catch(e) {}
+}
+// Restore dark mode preference
+if (localStorage.getItem('vmi_dark') === '1') {
+    document.documentElement.classList.add('dark');
+    const icon = document.getElementById('global-theme-icon');
+    if (icon) icon.textContent = 'light_mode';
+}
+
+// ─── PENDIENTES MODULE ─────────────────────────────────────────
+let pAllData = [];
+let pFilteredData = [];
+let pCharts = {};
+let pDataTable = null;
+let pTableCols = [];
+let pColMap = {};
+const P_COL_NAMES = ['Nombre','Codigo','Nped','FechaPed','Fdesp','Mes Desp','Ref','Descripcion','Linea','Coleccion','Color','TotalUnd','PrecioPed','TotalPrecioPed','Tipo de Cliente','Zona'];
+let pDepsLoaded = false;
+let pInited = false;
+
+function loadPDeps(cb) {
+    if (pDepsLoaded) { if (cb) cb(); return; }
+    let count = 0;
+    const total = 4;
+    function done() { count++; if (count === total) { pDepsLoaded = true; if (cb) cb(); } }
+    ['https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+     'https://code.jquery.com/jquery-3.7.1.min.js',
+     'https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js'].forEach(src => {
+        const s = document.createElement('script'); s.src = src; s.onload = done; document.head.appendChild(s);
+    });
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css'; l.onload = done; document.head.appendChild(l);
+}
+
+function initPendientes() {
+    if (pInited) return;
+    pInited = true;
+    const dz = document.getElementById('p-drop-zone');
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('border-blue-500','bg-blue-50'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('border-blue-500','bg-blue-50'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('border-blue-500','bg-blue-50'); if (e.dataTransfer.files[0]) loadPFile(e.dataTransfer.files[0]); });
+    document.querySelectorAll('#p-filters-panel select, #p-filters-panel input').forEach(el => el.addEventListener('change', applyPFilters));
+    document.getElementById('p-f-search').addEventListener('input', applyPFilters);
+}
+
+function showPTab(tab) {
+    document.getElementById('p-tab-dashboard').style.display = tab === 'dashboard' ? 'block' : 'none';
+    document.getElementById('p-tab-data').style.display = tab === 'data' ? 'block' : 'none';
+    document.getElementById('p-tab-dash-btn').className = 'pb-2 border-b-2 ' + (tab === 'dashboard' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500') + ' font-semibold text-sm';
+    document.getElementById('p-tab-data-btn').className = 'pb-2 border-b-2 ' + (tab === 'data' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500') + ' font-semibold text-sm';
+    if (tab === 'data' && pAllData.length) setTimeout(initPTable, 100);
+    return false;
+}
+
+function togglePTheme() {
+    document.getElementById('page-pendientes').classList.toggle('p-dark');
+    const isDark = document.getElementById('page-pendientes').classList.contains('p-dark');
+    document.getElementById('p-theme-icon').textContent = isDark ? 'light_mode' : 'dark_mode';
+    Object.values(pCharts).forEach(c => { if (c) c.update(); });
+}
+
+function parseNum(v) { if (v === undefined || v === null || v === '') return 0; const n = Number(String(v).replace(/[^0-9.\-]/g, '').replace(',', '.')); return isNaN(n) ? 0 : n; }
+function normalize(s) { return String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim(); }
+
+function loadPFile(file) {
+    loadPDeps(() => {
+        document.getElementById('p-status-msg').textContent = 'Procesando archivo...';
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+                if (!json.length) { alert('El archivo está vacío.'); return; }
+                const keys = Object.keys(json[0]);
+                const lower = keys.map(k => k.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+                pColMap = {};
+                P_COL_NAMES.forEach(cn => {
+                    const cl = cn.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    const i = lower.indexOf(cl);
+                    if (i !== -1) pColMap[cn] = keys[i];
+                });
+                pAllData = json.map(r => {
+                    const o = {};
+                    Object.keys(pColMap).forEach(k => o[k] = r[pColMap[k]] ?? '');
+                    o.__total = parseNum(o.TotalPrecioPed);
+                    o.__und = parseNum(o.TotalUnd);
+                    o.__precio = parseNum(o.PrecioPed);
+                    return o;
+                }).filter(r => r.__total !== 0 || r.__und !== 0);
+                document.getElementById('p-drop-zone').style.display = 'none';
+                document.getElementById('p-status-msg').textContent = pAllData.length + ' registros cargados';
+                lsSave('pendientes-data', { allData: pAllData, colMap: pColMap, timestamp: Date.now() });
+                populatePFilters();
+                applyPFilters();
+            } catch(err) { console.error(err); alert('Error: ' + err.message); }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+function populatePFilters() {
+    const map = { 'Mes Desp':'mes', 'Nombre':'cliente', 'Zona':'zona', 'Tipo de Cliente':'tipo', 'Linea':'linea', 'Coleccion':'coleccion', 'Color':'color' };
+    Object.entries(map).forEach(([field, id]) => {
+        const sel = document.getElementById('p-f-' + id);
+        const vals = [...new Set(pAllData.map(r => String(r[field] ?? '').trim()).filter(Boolean))].sort();
+        sel.innerHTML = '<option value="__all__">Todos</option>' + vals.map(v => '<option value="' + v.replace(/"/g,'&quot;') + '">' + v + '</option>').join('');
+    });
+}
+
+function getPFilters() {
+    const f = id => document.getElementById(id).value;
+    return { mes: f('p-f-mes'), cliente: f('p-f-cliente'), zona: f('p-f-zona'), tipo: f('p-f-tipo'), linea: f('p-f-linea'), coleccion: f('p-f-coleccion'), color: f('p-f-color'), search: normalize(document.getElementById('p-f-search').value) };
+}
+
+function updatePColorFilter() {
+    const search = normalize(document.getElementById('p-f-search').value);
+    let subset = pAllData;
+    if (search) subset = subset.filter(r => Object.values(r).some(v => normalize(v).includes(search)));
+    const vals = [...new Set(subset.map(r => String(r.Color || '').trim()).filter(Boolean))].sort();
+    const sel = document.getElementById('p-f-color');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="__all__">Todos</option>' + vals.map(v => '<option value="' + v.replace(/"/g,'&quot;') + '">' + v + '</option>').join('');
+    if (vals.includes(cur)) sel.value = cur; else sel.value = '__all__';
+}
+
+function applyPFilters() {
+    updatePColorFilter();
+    const f = getPFilters();
+    pFilteredData = pAllData.filter(r => {
+        if (f.mes !== '__all__' && normalize(r['Mes Desp']) !== normalize(f.mes)) return false;
+        if (f.cliente !== '__all__' && normalize(r.Nombre) !== normalize(f.cliente)) return false;
+        if (f.zona !== '__all__' && normalize(r.Zona) !== normalize(f.zona)) return false;
+        if (f.tipo !== '__all__' && normalize(r['Tipo de Cliente']) !== normalize(f.tipo)) return false;
+        if (f.linea !== '__all__' && normalize(r.Linea) !== normalize(f.linea)) return false;
+        if (f.coleccion !== '__all__' && normalize(r.Coleccion) !== normalize(f.coleccion)) return false;
+        if (f.color !== '__all__' && normalize(r.Color) !== normalize(f.color)) return false;
+        if (f.search) {
+            if (!Object.values(r).map(v => normalize(v)).join(' ').includes(f.search)) return false;
+        }
+        return true;
+    });
+    renderPKPIs();
+    renderPCharts();
+    renderPResumen();
+    if (pDataTable) {
+        const arr = pTableCols.length ? pFilteredData.map(r => pTableCols.map(c => r[c] ?? '')) : [];
+        pDataTable.clear();
+        if (arr.length) pDataTable.rows.add(arr);
+        pDataTable.draw();
+    }
+}
+
+function clearPendientes() {
+    document.querySelectorAll('#p-filters-panel select').forEach(s => s.value = '__all__');
+    document.getElementById('p-f-search').value = '';
+    applyPFilters();
+}
+
+function renderPKPIs() {
+    const total = pFilteredData.reduce((s, r) => s + r.__total, 0);
+    const ped = new Set(pFilteredData.map(r => r.Nped).filter(Boolean)).size;
+    const cli = new Set(pFilteredData.map(r => r.Nombre).filter(Boolean)).size;
+    const und = pFilteredData.reduce((s, r) => s + r.__und, 0);
+    document.getElementById('p-kpi-facturacion').textContent = '$' + Math.round(total).toLocaleString('es-CO');
+    document.getElementById('p-kpi-pedidos').textContent = ped.toLocaleString();
+    document.getElementById('p-kpi-clientes').textContent = cli.toLocaleString();
+    document.getElementById('p-kpi-unidades').textContent = Math.round(und).toLocaleString();
+    document.getElementById('p-kpi-ticket').textContent = '$' + Math.round(pFilteredData.length ? total / pFilteredData.length : 0).toLocaleString('es-CO');
+    document.getElementById('p-kpi-valor-cliente').textContent = '$' + Math.round(cli ? total / cli : 0).toLocaleString('es-CO');
+}
+
+function renderPCharts() {
+    if (typeof Chart === 'undefined') return;
+    const isDark = document.getElementById('page-pendientes').classList.contains('p-dark');
+    const tc = isDark ? '#94a3b8' : '#64748b';
+    const gc = isDark ? '#334155' : '#e2e8f0';
+    const opts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: tc, font: { size: 11 } } } }, scales: { x: { ticks: { color: tc }, grid: { color: gc } }, y: { ticks: { color: tc }, grid: { color: gc } } } };
+    Object.values(pCharts).forEach(c => { if (c) c.destroy(); });
+    pCharts = {};
+
+    const byCli = {}; pFilteredData.forEach(r => { const n = r.Nombre || 'Sin nombre'; byCli[n] = (byCli[n] || 0) + r.__total; });
+    const topCli = Object.entries(byCli).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    pCharts.topCli = new Chart(document.getElementById('p-chart-top-clientes'), { type: 'bar', data: { labels: topCli.map(e => e[0]), datasets: [{ label: 'Facturación', data: topCli.map(e => e[1]), backgroundColor: '#3b82f6', borderRadius: 4 }] }, options: { ...opts, indexAxis: 'y', plugins: { ...opts.plugins, legend: { display: false } } } });
+
+    const byMes = {}; pFilteredData.forEach(r => { const m = r['Mes Desp'] || 'Sin mes'; byMes[m] = (byMes[m] || 0) + r.__total; });
+    const mesE = Object.entries(byMes).sort((a, b) => a[0].localeCompare(b[0]));
+    pCharts.mes = new Chart(document.getElementById('p-chart-mes'), { type: 'bar', data: { labels: mesE.map(e => e[0]), datasets: [{ label: 'Facturación', data: mesE.map(e => e[1]), backgroundColor: '#10b981', borderRadius: 4 }] }, options: { ...opts, plugins: { ...opts.plugins, legend: { display: false } } } });
+
+    const byZona = {}; pFilteredData.forEach(r => { const z = r.Zona || 'Sin zona'; byZona[z] = (byZona[z] || 0) + r.__total; });
+    const zonE = Object.entries(byZona).sort((a, b) => b[1] - a[1]);
+    pCharts.zona = new Chart(document.getElementById('p-chart-zona'), { type: 'doughnut', data: { labels: zonE.map(e => e[0]), datasets: [{ data: zonE.map(e => e[1]), backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316'].slice(0, zonE.length) }] }, options: { ...opts, plugins: { ...opts.plugins, legend: { position: 'bottom', labels: { color: tc, font: { size: 11 } } } } } });
+
+    const byLin = {}; pFilteredData.forEach(r => { const l = r.Linea || 'Sin línea'; byLin[l] = (byLin[l] || 0) + r.__total; });
+    const linE = Object.entries(byLin).sort((a, b) => b[1] - a[1]);
+    pCharts.linea = new Chart(document.getElementById('p-chart-linea'), { type: 'bar', data: { labels: linE.map(e => e[0]), datasets: [{ label: 'Facturación', data: linE.map(e => e[1]), backgroundColor: '#8b5cf6', borderRadius: 4 }] }, options: { ...opts, plugins: { ...opts.plugins, legend: { display: false } } } });
+
+    const byFec = {}; pFilteredData.forEach(r => { const f = r.FechaPed || 'Sin fecha'; byFec[f] = (byFec[f] || 0) + 1; });
+    const fecE = Object.entries(byFec).sort((a, b) => a[0].localeCompare(b[0]));
+    pCharts.evol = new Chart(document.getElementById('p-chart-evolucion'), { type: 'line', data: { labels: fecE.map(e => e[0]), datasets: [{ label: 'Pedidos', data: fecE.map(e => e[1]), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: .3, pointRadius: 3 }] }, options: { ...opts, plugins: { ...opts.plugins, legend: { display: false } } } });
+
+    const byRef = {}; pFilteredData.forEach(r => { const rf = r.Ref || 'Sin ref'; byRef[rf] = (byRef[rf] || 0) + r.__total; });
+    const topRef = Object.entries(byRef).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    pCharts.refs = new Chart(document.getElementById('p-chart-refs'), { type: 'bar', data: { labels: topRef.map(e => e[0]), datasets: [{ label: 'Facturación', data: topRef.map(e => e[1]), backgroundColor: '#f59e0b', borderRadius: 4 }] }, options: { ...opts, indexAxis: 'y', plugins: { ...opts.plugins, legend: { display: false } } } });
+}
+
+function renderPResumen() {
+    const total = pFilteredData.reduce((s, r) => s + r.__total, 0);
+    const n = pFilteredData.length;
+    const cli = new Set(pFilteredData.map(r => r.Nombre).filter(Boolean)).size;
+    const topC = Object.entries(pFilteredData.reduce((a, r) => { const n = r.Nombre||'Otros'; a[n]=(a[n]||0)+r.__total; return a; }, {})).sort((a,b)=>b[1]-a[1])[0];
+    const topR = Object.entries(pFilteredData.reduce((a, r) => { const rf = r.Ref||'Otros'; a[rf]=(a[rf]||0)+r.__total; return a; }, {})).sort((a,b)=>b[1]-a[1])[0];
+    const refsN = new Set(pFilteredData.map(r => r.Ref).filter(Boolean)).size;
+    const meses = new Set(pFilteredData.map(r => r['Mes Desp']).filter(Boolean)).size;
+    let txt = 'Se analizaron <strong>' + n + '</strong> pedidos pendientes por un total de <strong>$' + Math.round(total).toLocaleString('es-CO') + '</strong>, distribuidos en <strong>' + cli + '</strong> clientes y <strong>' + refsN + '</strong> referencias distintas. ';
+    if (topC) txt += 'El cliente con mayor facturación pendiente es <strong>' + topC[0] + '</strong> ($' + Math.round(topC[1]).toLocaleString('es-CO') + '). ';
+    if (topR) txt += 'La referencia con mayor valor pendiente es <strong>' + topR[0] + '</strong> ($' + Math.round(topR[1]).toLocaleString('es-CO') + '). ';
+    txt += 'Los pedidos abarcan <strong>' + meses + '</strong> meses de despacho.';
+    document.getElementById('p-resumen-text').innerHTML = txt;
+}
+
+function initPTable() {
+    if (!pFilteredData.length || pDataTable) return;
+    if (typeof $ === 'undefined' || typeof $.fn.DataTable === 'undefined') return;
+    pTableCols = Object.keys(pFilteredData[0]).filter(k => !k.startsWith('__'));
+    document.getElementById('p-table-head').innerHTML = pTableCols.map(c => '<th>' + c + '</th>').join('');
+    const data = pFilteredData.map(r => pTableCols.map(c => r[c] ?? ''));
+    try {
+        pDataTable = $('#p-main-table').DataTable({
+            data: data, pageLength: 25, lengthMenu: [[10,25,50,100,-1],[10,25,50,100,'Todos']],
+            language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
+            order: [], destroy: true, deferRender: true
+        });
+    } catch(e) { console.error('DataTable init:', e); }
+}
+
+function exportPTableExcel() {
+    if (!pFilteredData.length) return alert('No hay datos para exportar.');
+    const cols = Object.keys(pFilteredData[0]).filter(k => !k.startsWith('__'));
+    const rows = pFilteredData.map(r => cols.map(c => r[c] ?? ''));
+    rows.unshift(cols);
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Pendientes');
+    XLSX.writeFile(wb, 'pendientes_facturar_busint.xlsx');
+}
+
+function exportPTableCSV() {
+    if (!pFilteredData.length) return alert('No hay datos para exportar.');
+    const cols = Object.keys(pFilteredData[0]).filter(k => !k.startsWith('__'));
+    let csv = cols.join(',') + '\n';
+    pFilteredData.forEach(r => {
+        csv += cols.map(c => {
+            let v = String(r[c] ?? '');
+            if (v.includes(',') || v.includes('"') || v.includes('\n')) v = '"' + v.replace(/"/g, '""') + '"';
+            return v;
+        }).join(',') + '\n';
+    });
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pendientes_facturar_busint.csv'; a.click();
+}
 </script>
 </body>
 </html>
