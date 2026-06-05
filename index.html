@@ -291,6 +291,48 @@
         </div>
     </header>
     <div class="flex-1 p-md space-y-md">
+
+        <!-- Group KPIs -->
+        <div id="rev-kpi-container" class="grid grid-cols-1 md:grid-cols-3 gap-md">
+            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant border-l-4 border-l-red-500">
+                <p class="font-label-caps text-label-caps text-outline uppercase mb-1">Tend+ Cierre-</p>
+                <div class="flex gap-4 text-body-md">
+                    <span>Reg: <strong id="rev-kpi-tpc-count">0</strong></span>
+                    <span>Agot: <strong class="text-error" id="rev-kpi-tpc-agot">0</strong></span>
+                    <span>Cierre: <strong class="text-error" id="rev-kpi-tpc-cierre">0</strong></span>
+                </div>
+            </div>
+            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant border-l-4 border-l-orange-400">
+                <p class="font-label-caps text-label-caps text-outline uppercase mb-1">Tend- Cierre+</p>
+                <div class="flex gap-4 text-body-md">
+                    <span>Reg: <strong id="rev-kpi-tcp-count">0</strong></span>
+                    <span>Agot: <strong class="text-error" id="rev-kpi-tcp-agot">0</strong></span>
+                    <span>Cierre: <strong class="text-emerald-600" id="rev-kpi-tcp-cierre">0</strong></span>
+                </div>
+            </div>
+            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant border-l-4 border-l-gray-400">
+                <p class="font-label-caps text-label-caps text-outline uppercase mb-1">Tend- Cierre-</p>
+                <div class="flex gap-4 text-body-md">
+                    <span>Reg: <strong id="rev-kpi-tcc-count">0</strong></span>
+                    <span>Agot: <strong class="text-error" id="rev-kpi-tcc-agot">0</strong></span>
+                    <span>Cierre: <strong class="text-error" id="rev-kpi-tcc-cierre">0</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison chart row -->
+        <div class="grid grid-cols-12 gap-md">
+            <div class="col-span-12 lg:col-span-6 bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant">
+                <h3 class="font-headline-sm text-headline-sm text-primary mb-2">Comparación Cierre por Grupo</h3>
+                <div style="position:relative;height:250px"><canvas id="rev-chart-cierre" style="width:100%;height:100%"></canvas></div>
+            </div>
+            <div class="col-span-12 lg:col-span-6 bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant">
+                <h3 class="font-headline-sm text-headline-sm text-primary mb-2">Comparación Agotados por Grupo</h3>
+                <div style="position:relative;height:250px"><canvas id="rev-chart-agot" style="width:100%;height:100%"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Existing table -->
         <div class="bg-white rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant p-md">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="font-headline-sm text-headline-sm text-primary">Detalle Revisión Cierre</h3>

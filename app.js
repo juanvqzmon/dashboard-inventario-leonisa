@@ -382,6 +382,7 @@ function applyFilters(columns, colRef, colColor, colStock, colAgotados, colDesc,
     renderCharts(columns, colCategoria, colStock, colColor);
     updateInsights(columns, colCategoria, colStock);
     renderRevisionTable(colRef, colColor, colDesc, colStock, colCierre, colAgotados, findColumn(COLUMN_ALIASES.estado, cols));
+    renderRevisionDashboard(colRef, colColor, colStock, colCierre, colAgotados, cols);
 }
 
 // ─── KPIs ─────────────────────────────────────────────────────
@@ -620,6 +621,105 @@ function renderRevisionTable(colRef, colColor, colDesc, colStock, colCierre, col
             <td class="px-md py-3 whitespace-nowrap text-right">${tendDia}</td>
         </tr>`;
     }).join('') || '<tr><td colspan="12" class="text-center p-4 text-outline">Sin resultados</td></tr>';
+}
+
+// ─── REVISION DASHBOARD ──────────────────────────────────────
+function renderRevisionDashboard(colRef, colColor, colStock, colCierre, colAgotados, cols) {
+    const colTendencia = findColumn(COLUMN_ALIASES.tendencia, cols) || findColumnLoose(COLUMN_ALIASES.tendencia, cols);
+
+    function parseNum(v) {
+        const n = Number(String(v ?? '').replace(/[^0-9.\-]/g, '').replace(',', '.'));
+        return isNaN(n) ? 0 : n;
+    }
+
+    const groups = { tpc: [], tcp: [], tcc: [] };
+    filteredData.forEach(r => {
+        const tend = colTendencia ? parseNum(r[colTendencia]) : 0;
+        const cierre = colCierre ? parseNum(r[colCierre]) : 0;
+        if (tend > 0 && cierre < 0) groups.tpc.push(r);
+        else if (tend < 0 && cierre > 0) groups.tcp.push(r);
+        else if (tend < 0 && cierre < 0) groups.tcc.push(r);
+    });
+
+    function sumAgot(rows) {
+        return rows.reduce((s, r) => {
+            const v = !isNaN(r.__agotados) ? r.__agotados : (r.__stock <= 0 ? Math.abs(r.__stock) : 0);
+            return s + (isNaN(v) ? 0 : v);
+        }, 0);
+    }
+
+    function sumCierre(rows) {
+        return rows.reduce((s, r) => s + (isNaN(r.__cierre) ? 0 : r.__cierre), 0);
+    }
+
+    const kpis = {
+        tpc: { count: groups.tpc.length, agot: sumAgot(groups.tpc), cierre: sumCierre(groups.tpc) },
+        tcp: { count: groups.tcp.length, agot: sumAgot(groups.tcp), cierre: sumCierre(groups.tcp) },
+        tcc: { count: groups.tcc.length, agot: sumAgot(groups.tcc), cierre: sumCierre(groups.tcc) },
+    };
+
+    Object.keys(kpis).forEach(k => {
+        document.getElementById(`rev-kpi-${k}-count`).textContent = kpis[k].count;
+        document.getElementById(`rev-kpi-${k}-agot`).textContent = Math.round(kpis[k].agot).toLocaleString();
+        document.getElementById(`rev-kpi-${k}-cierre`).textContent = Math.round(kpis[k].cierre).toLocaleString();
+    });
+
+    // Draw cierre comparison chart
+    const ctxC = document.getElementById('rev-chart-cierre').getContext('2d');
+    const cierreVals = [kpis.tpc.cierre, kpis.tcp.cierre, kpis.tcc.cierre];
+    drawRevBarChart(ctxC, ['Tend+\nCierre-', 'Tend-\nCierre+', 'Tend-\nCierre-'], cierreVals, '#ba1a1a');
+
+    // Draw agotados comparison chart
+    const ctxA = document.getElementById('rev-chart-agot').getContext('2d');
+    const agotVals = [kpis.tpc.agot, kpis.tcp.agot, kpis.tcc.agot];
+    drawRevBarChart(ctxA, ['Tend+\nCierre-', 'Tend-\nCierre+', 'Tend-\nCierre-'], agotVals, '#006399');
+}
+
+function drawRevBarChart(ctx, labels, values, color) {
+    const rect = ctx.canvas.parentElement.getBoundingClientRect();
+    const W = rect.width || 400;
+    const H = rect.height || 250;
+    ctx.canvas.width = W * 2;
+    ctx.canvas.height = H * 2;
+    ctx.scale(2, 2);
+    ctx.clearRect(0, 0, W, H);
+
+    const max = Math.max(...values.map(Math.abs), 1);
+    const pad = { top: 20, bottom: 60, left: 10, right: 10 };
+    const chartW = W - pad.left - pad.right;
+    const chartH = H - pad.top - pad.bottom;
+    const gap = chartW / labels.length;
+
+    ctx.font = '11px IBM Plex Sans, sans-serif';
+    ctx.textAlign = 'center';
+
+    const barW = Math.max(Math.min(gap * 0.6, 100), 20);
+
+    values.forEach((v, i) => {
+        const x = pad.left + gap * i + gap / 2;
+        const barH = chartH * Math.abs(v) / max;
+        const y = v >= 0 ? pad.top + chartH - barH : pad.top + chartH;
+
+        ctx.fillStyle = v < 0 ? '#ef4444' : '#22c55e';
+        ctx.fillRect(x - barW / 2, y, barW, Math.max(barH, 1));
+
+        ctx.fillStyle = '#0b1c30';
+        ctx.font = 'bold 11px IBM Plex Sans, sans-serif';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(Math.round(v).toLocaleString(), x, y - 4);
+
+        ctx.fillStyle = '#737780';
+        ctx.font = '10px IBM Plex Sans, sans-serif';
+        ctx.textBaseline = 'top';
+        ctx.fillText(labels[i], x, pad.top + chartH + 8);
+    });
+
+    ctx.strokeStyle = '#d1d5db';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, pad.top + chartH);
+    ctx.lineTo(W - pad.right, pad.top + chartH);
+    ctx.stroke();
 }
 function renderCharts(columns, colCategoria, colStock, colColor) {
     const ctxCierre = document.getElementById('chartCierre').getContext('2d');
