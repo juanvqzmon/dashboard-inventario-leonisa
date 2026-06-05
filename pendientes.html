@@ -193,6 +193,7 @@ let allData = [];
 let filteredData = [];
 let charts = {};
 let dataTable = null;
+let _tableCols = [];
 const COL_NAMES = ['Nombre','Codigo','Nped','FechaPed','Fdesp','Mes Desp','Ref','Descripcion','Linea','Coleccion','Color','TotalUnd','PrecioPed','TotalPrecioPed','Tipo de Cliente','Zona'];
 let colMap = {};
 
@@ -328,7 +329,12 @@ function applyFilters() {
     renderKPIs();
     renderCharts();
     renderResumen();
-    if (dataTable) { dataTable.clear(); dataTable.rows.add(filteredData); dataTable.draw(); }
+    if (dataTable) {
+        const arr = _tableCols.length ? filteredData.map(r => _tableCols.map(c => r[c] ?? '')) : [];
+        dataTable.clear();
+        if (arr.length) dataTable.rows.add(arr);
+        dataTable.draw();
+    }
 }
 
 document.querySelectorAll('#filters-panel select, #filters-panel input').forEach(el => {
@@ -430,14 +436,14 @@ function initTable() {
     if (!filteredData.length) return;
     if (dataTable) { dataTable.destroy(); dataTable = null; }
 
-    const cols = Object.keys(filteredData[0]).filter(k => !k.startsWith('__'));
+    _tableCols = Object.keys(filteredData[0]).filter(k => !k.startsWith('__'));
     const thead = document.getElementById('table-head');
-    thead.innerHTML = cols.map(c => `<th>${c}</th>`).join('');
+    thead.innerHTML = _tableCols.map(c => `<th>${c}</th>`).join('');
 
     const tbody = document.getElementById('table-body');
     tbody.innerHTML = '';
 
-    const data = filteredData.map(r => cols.map(c => r[c] ?? ''));
+    const data = filteredData.map(r => _tableCols.map(c => r[c] ?? ''));
     dataTable = $('#main-table').DataTable({
         data: data,
         pageLength: 25,
