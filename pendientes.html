@@ -310,7 +310,22 @@ function getFilters() {
     };
 }
 
+function updateColorFilter() {
+    const search = normalize(document.getElementById('f-search').value);
+    let subset = allData;
+    if (search) {
+        subset = subset.filter(r => Object.values(r).some(v => normalize(v).includes(search)));
+    }
+    const vals = [...new Set(subset.map(r => String(r.Color || '').trim()).filter(Boolean))].sort();
+    const sel = document.getElementById('f-color');
+    const current = sel.value;
+    sel.innerHTML = '<option value="__all__">Todos</option>' + vals.map(v => `<option value="${v.replace(/"/g,'&quot;')}">${v}</option>`).join('');
+    if (vals.includes(current)) sel.value = current;
+    else sel.value = '__all__';
+}
+
 function applyFilters() {
+    updateColorFilter();
     const f = getFilters();
     filteredData = allData.filter(r => {
         if (f.mes !== '__all__' && normalize(r['Mes Desp']) !== normalize(f.mes)) return false;
@@ -339,8 +354,9 @@ function applyFilters() {
 
 document.querySelectorAll('#filters-panel select, #filters-panel input').forEach(el => {
     el.addEventListener('change', applyFilters);
-    el.addEventListener('input', applyFilters);
 });
+
+document.getElementById('f-search').addEventListener('input', applyFilters);
 
 function clearFilters() {
     document.querySelectorAll('#filters-panel select').forEach(s => s.value = '__all__');
