@@ -682,7 +682,12 @@ function loadPFile(file) {
                 });
                 pAllData = json.map(r => {
                     const o = {};
-                    Object.keys(pColMap).forEach(k => o[k] = r[pColMap[k]] ?? '');
+                    // All original Excel columns
+                    keys.forEach(k => o[k] = r[k] ?? '');
+                    // Add mapped names (for filters/charts that expect P_COL_NAMES)
+                    Object.keys(pColMap).forEach(k => {
+                        if (!(k in o)) o[k] = r[pColMap[k]] ?? '';
+                    });
                     o.__total = parseNum(o.TotalPrecioPed);
                     o.__und = parseNum(o.TotalUnd);
                     o.__precio = parseNum(o.PrecioPed);
