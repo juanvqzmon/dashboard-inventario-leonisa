@@ -610,6 +610,7 @@ let pDataTable = null;
 let pTableCols = [];
 let pColMap = {};
 const P_COL_NAMES = ['Nombre','Codigo','Nped','FechaPed','Fdesp','Mes Desp','Ref','Descripcion','Linea','Coleccion','Color','TotalUnd','PrecioPed','TotalPrecioPed','Tipo de Cliente','Zona'];
+const P_DISPLAY_COLS = ['Mes Desp','Nped','FechaPed','Nombre','Ref','Color','TotalUnd','PrecioPed','TotalPrecioPed','Fdesp','ObsRped','ObsPedido'];
 let pDepsLoaded = false;
 let pInited = false;
 
@@ -830,7 +831,7 @@ function renderPResumen() {
 function initPTable() {
     if (!pFilteredData.length || pDataTable) return;
     if (typeof $ === 'undefined' || typeof $.fn.DataTable === 'undefined') return;
-    pTableCols = Object.keys(pFilteredData[0]).filter(k => !k.startsWith('__'));
+    pTableCols = P_DISPLAY_COLS.filter(c => c in pFilteredData[0]);
     document.getElementById('p-table-head').innerHTML = pTableCols.map(c => '<th>' + c + '</th>').join('');
     const data = pFilteredData.map(r => pTableCols.map(c => r[c] ?? ''));
     try {
