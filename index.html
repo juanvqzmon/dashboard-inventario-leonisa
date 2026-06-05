@@ -106,7 +106,7 @@
     @media print {
         @page { margin: 12mm; size: A4 landscape; }
         #sidebar, #drop-zone, #global-search, #filters-bar, #btn-export-excel, #btn-export-pdf, [onclick] { display: none !important; }
-        #dashboard, #page-revision-cierre, #page-pendientes { margin-left: 0 !important; width: 100% !important; }
+        #dashboard, #page-revision-cierre { margin-left: 0 !important; width: 100% !important; }
         #dashboard { display: flex !important; }
         .space-y-md > * { break-inside: avoid; }
         .overflow-x-auto { overflow: visible !important; max-height: none !important; }
@@ -148,7 +148,7 @@
             <span class="material-symbols-outlined">warning</span>
             <span class="font-label-caps text-label-caps uppercase">Revisión Cierre</span>
         </a>
-        <a class="flex items-center gap-4 px-6 py-4 text-secondary-fixed border-l-4 border-transparent hover:bg-on-primary-fixed-variant/5 transition-all cursor-pointer" href="#" id="btn-pendientes">
+        <a class="flex items-center gap-4 px-6 py-4 text-secondary-fixed border-l-4 border-transparent hover:bg-on-primary-fixed-variant/5 transition-all cursor-pointer" href="pendientes.html">
             <span class="material-symbols-outlined">pending_actions</span>
             <span class="font-label-caps text-label-caps uppercase">Pendiente por Facturar Busint</span>
         </a>
@@ -370,43 +370,23 @@
     </div>
 </section>
 
-<!-- PENDIENTE POR FACTURAR BUSINT -->
-<section id="page-pendientes" class="ml-[260px] min-h-screen flex-col hidden">
-    <header class="flex justify-between items-center w-full h-16 px-md bg-surface border-b border-outline-variant z-30 sticky top-0">
-        <div class="flex items-center gap-4">
-            <h2 class="font-headline-sm text-headline-sm font-bold text-primary">Pendiente por Facturar Busint</h2>
-        </div>
-    </header>
-    <div class="flex-1 p-md space-y-md">
-        <div class="bg-white rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant p-md">
-            <p class="text-outline">Contenido próximamente.</p>
-        </div>
-    </div>
-</section>
-
 <script src="app.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const btnDash = document.querySelector('#sidebar a[href="#"]');
     const btnRev = document.getElementById('btn-revision-cierre');
-    const btnPend = document.getElementById('btn-pendientes');
     const pageDash = document.getElementById('dashboard');
     const pageRev = document.getElementById('page-revision-cierre');
-    const pagePend = document.getElementById('page-pendientes');
 
     function showPage(page) {
         pageDash.classList.toggle('hidden', page !== 'dashboard');
         pageDash.classList.toggle('flex', page === 'dashboard');
         pageRev.classList.toggle('hidden', page !== 'revision');
         pageRev.classList.toggle('flex-col', page === 'revision');
-        pagePend.classList.toggle('hidden', page !== 'pendientes');
-        pagePend.classList.toggle('flex-col', page === 'pendientes');
         btnDash.classList.toggle('border-secondary-container', page === 'dashboard');
         btnDash.classList.toggle('bg-on-primary-fixed-variant/10', page === 'dashboard');
         btnRev.classList.toggle('border-secondary-container', page === 'revision');
         btnRev.classList.toggle('bg-on-primary-fixed-variant/10', page === 'revision');
-        btnPend.classList.toggle('border-secondary-container', page === 'pendientes');
-        btnPend.classList.toggle('bg-on-primary-fixed-variant/10', page === 'pendientes');
         if (page === 'dashboard' && typeof redrawBarChart === 'function') {
             setTimeout(() => { redrawBarChart(); if (typeof redrawCierreChart === 'function') redrawCierreChart(); }, 50);
         }
@@ -420,7 +400,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnDash.addEventListener('click', (e) => { e.preventDefault(); showPage('dashboard'); });
     btnRev.addEventListener('click', (e) => { e.preventDefault(); showPage('revision'); });
-    btnPend.addEventListener('click', (e) => { e.preventDefault(); showPage('pendientes'); });
 });
 </script>
 </body>
