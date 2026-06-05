@@ -642,7 +642,13 @@ function showPTab(tab) {
     document.getElementById('p-tab-data').style.display = tab === 'data' ? 'block' : 'none';
     document.getElementById('p-tab-dash-btn').className = 'pb-2 border-b-2 ' + (tab === 'dashboard' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500') + ' font-semibold text-sm';
     document.getElementById('p-tab-data-btn').className = 'pb-2 border-b-2 ' + (tab === 'data' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500') + ' font-semibold text-sm';
-    if (tab === 'data' && pAllData.length) setTimeout(initPTable, 100);
+    if (tab === 'data' && pAllData.length) {
+        if (pDataTable) {
+            setTimeout(() => { try { pDataTable.columns.adjust().draw(); } catch(e) { initPTable(); } }, 50);
+        } else {
+            setTimeout(initPTable, 200);
+        }
+    }
     return false;
 }
 
@@ -737,6 +743,9 @@ function applyPFilters() {
     renderPKPIs();
     renderPCharts();
     renderPResumen();
+    if (!pDataTable && pFilteredData.length && typeof $ !== 'undefined' && typeof $.fn.DataTable !== 'undefined') {
+        initPTable();
+    }
     if (pDataTable) {
         const arr = pTableCols.length ? pFilteredData.map(r => pTableCols.map(c => r[c] ?? '')) : [];
         pDataTable.clear();
