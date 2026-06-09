@@ -655,12 +655,31 @@ function loadPDeps(cb) {
     let count = 0;
     const total = 4;
     function done() { count++; if (count === total) { pDepsLoaded = true; if (cb) cb(); } }
-    ['https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
-     'https://code.jquery.com/jquery-3.7.1.min.js',
-     'https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js'].forEach(src => {
-        const s = document.createElement('script'); s.src = src; s.onload = done; document.head.appendChild(s);
-    });
-    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css'; l.onload = done; document.head.appendChild(l);
+
+    // jQuery must load BEFORE DataTable, so chain them
+    const jq = document.createElement('script');
+    jq.src = 'https://code.jquery.com/jquery-3.7.1.min.js';
+    jq.onload = function() {
+        done();
+        const dt = document.createElement('script');
+        dt.src = 'https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js';
+        dt.onload = done;
+        dt.onerror = done; // count it even if it fails, so we don't hang
+        document.head.appendChild(dt);
+    };
+    jq.onerror = done; // don't hang if CDN fails
+    document.head.appendChild(jq);
+
+    const ch = document.createElement('script');
+    ch.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+    ch.onload = done; ch.onerror = done;
+    document.head.appendChild(ch);
+
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = 'https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css';
+    css.onload = done; css.onerror = done;
+    document.head.appendChild(css);
 }
 
 function initPendientes() {
