@@ -706,9 +706,23 @@ function getRefsForAutocomplete(query) {
     if (f.color !== '__all__') base = base.filter(r => normalize(r.Color) === normalize(f.color));
     const allRefs = [...new Set(base.map(r => String(r.Ref||'').trim()).filter(Boolean))].sort();
     const nq = normalize(query);
+    const chars = [...nq];
     return allRefs
-        .filter(r => normalize(r).includes(nq))
-        .sort((a, b) => normalize(a).indexOf(nq) - normalize(b).indexOf(nq))
+        .filter(r => {
+            const nr = normalize(r);
+            if (nr.includes(nq)) return true;
+            return chars.every(ch => nr.includes(ch));
+        })
+        .sort((a, b) => {
+            const na = normalize(a), nb = normalize(b);
+            const ia = na.indexOf(nq), ib = nb.indexOf(nq);
+            if (ia !== -1 && ib !== -1) return ia - ib;
+            if (ia !== -1) return -1;
+            if (ib !== -1) return 1;
+            const fa = chars.map(ch => na.indexOf(ch)).filter(i => i !== -1);
+            const fb = chars.map(ch => nb.indexOf(ch)).filter(i => i !== -1);
+            return (fa.length ? Math.min(...fa) : Infinity) - (fb.length ? Math.min(...fb) : Infinity);
+        })
         .slice(0, 10);
 }
 
@@ -726,13 +740,32 @@ function initPendientesSearch() {
             dd.classList.remove('hidden'); selIdx = -1; return;
         }
         const nq = normalize(query);
+        const chars = [...nq];
         matches.forEach((ref, i) => {
             const div = document.createElement('div');
             div.className = 'p-search-item';
-            const idx = normalize(ref).indexOf(nq);
+            const nr = normalize(ref);
+            const idx = nr.indexOf(nq);
             if (idx >= 0) {
                 div.innerHTML = ref.slice(0, idx) + '<span class="match">' + ref.slice(idx, idx + query.length) + '</span>' + ref.slice(idx + query.length);
-            } else { div.textContent = ref; }
+            } else {
+                // highlight individual matching chars in order
+                const rl = ref.toLowerCase();
+                const used = [];
+                for (const ch of chars) {
+                    const p = [...rl].findIndex((c, pi) => c === ch && !used.includes(pi));
+                    if (p >= 0) used.push(p);
+                }
+                let html = '';
+                for (let j = 0; j < ref.length; j++) {
+                    if (used.includes(j)) {
+                        html += '<span class="match">' + ref[j] + '</span>';
+                    } else {
+                        html += ref[j];
+                    }
+                }
+                div.innerHTML = html;
+            }
             div.dataset.value = ref;
             div.addEventListener('mousedown', e => { e.preventDefault(); input.value = ref; close(); applyPFilters(); });
             dd.appendChild(div);
