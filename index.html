@@ -146,6 +146,16 @@
 #page-pendientes.p-dark .p-table-top .dataTables_filter input { background:#0f172a; color:#e2e8f0; border-color:#475569!important; }
 #page-pendientes.p-dark .btn-excel-pendientes { background:#0f172a; border-color:#059669!important; color:#34d399!important; }
 #page-pendientes.p-dark .btn-excel-pendientes:hover { background:#1a2332; }
+/* Autocomplete dropdown */
+#p-search-dropdown .p-search-item { padding:8px 12px; font-size:13px; cursor:pointer; border-bottom:1px solid #f1f5f9; }
+#p-search-dropdown .p-search-item:last-child { border-bottom:none; }
+#p-search-dropdown .p-search-item:hover { background:#e0f2fe; }
+#p-search-dropdown .p-search-item .match { font-weight:700; }
+#p-search-dropdown .p-search-empty { padding:12px; text-align:center; color:#94a3b8; font-size:13px; }
+#page-pendientes.p-dark #p-search-dropdown { background:#1e293b; border-color:#334155; }
+#page-pendientes.p-dark #p-search-dropdown .p-search-item { border-bottom-color:#334155; color:#e2e8f0; }
+#page-pendientes.p-dark #p-search-dropdown .p-search-item:hover { background:#1e3a5f; }
+#page-pendientes.p-dark #p-search-dropdown .p-search-empty { color:#64748b; }
 /* Responsive */
 @media (max-width:767px) {
     #p-tab-data .overflow-x-auto { overflow-x:auto; }
@@ -475,7 +485,13 @@
             <div><label class="text-xs font-semibold text-gray-500 block mb-1">Línea</label><select id="p-f-linea" class="p-filter"><option value="__all__">Todos</option></select></div>
             <div><label class="text-xs font-semibold text-gray-500 block mb-1">Colección</label><select id="p-f-coleccion" class="p-filter"><option value="__all__">Todos</option></select></div>
             <div><label class="text-xs font-semibold text-gray-500 block mb-1">Color</label><select id="p-f-color" class="p-filter"><option value="__all__">Todos</option></select></div>
-            <div><label class="text-xs font-semibold text-gray-500 block mb-1">Buscar</label><input type="text" id="p-f-search" class="p-filter" placeholder="Buscar..."/></div>
+            <div>
+                <label class="text-xs font-semibold text-gray-500 block mb-1">Buscar</label>
+                <div class="relative">
+                    <input type="text" id="p-f-search" class="p-filter" placeholder="Buscar ref..." autocomplete="off"/>
+                    <div id="p-search-dropdown" class="hidden absolute top-full left-0 w-full bg-white shadow-lg rounded-b-lg z-[100] max-h-60 overflow-y-auto border border-gray-200 border-t-0"></div>
+                </div>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -654,10 +670,76 @@ function initPendientes() {
     dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('border-blue-500','bg-blue-50'); });
     dz.addEventListener('dragleave', () => dz.classList.remove('border-blue-500','bg-blue-50'));
     dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('border-blue-500','bg-blue-50'); if (e.dataTransfer.files[0]) loadPFile(e.dataTransfer.files[0]); });
-    document.querySelectorAll('#p-filters-panel select, #p-filters-panel input').forEach(el => el.addEventListener('change', applyPFilters));
-    const pSearch = document.getElementById('p-f-search');
-    pSearch.addEventListener('input', applyPFilters);
-    pSearch.addEventListener('keyup', applyPFilters);
+    document.querySelectorAll('#p-filters-panel select').forEach(el => el.addEventListener('change', applyPFilters));
+    initPendientesSearch();
+}
+
+function getRefsForAutocomplete(query) {
+    if (!pAllData.length || query.length < 3) return [];
+    const f = getPFilters();
+    let base = pAllData;
+    if (f.mes !== '__all__') base = base.filter(r => normalize(r['Mes Desp']) === normalize(f.mes));
+    if (f.cliente !== '__all__') base = base.filter(r => normalize(r.Nombre) === normalize(f.cliente));
+    if (f.zona !== '__all__') base = base.filter(r => normalize(r.Zona) === normalize(f.zona));
+    if (f.tipo !== '__all__') base = base.filter(r => normalize(r['Tipo de Cliente']) === normalize(f.tipo));
+    if (f.linea !== '__all__') base = base.filter(r => normalize(r.Linea) === normalize(f.linea));
+    if (f.coleccion !== '__all__') base = base.filter(r => normalize(r.Coleccion) === normalize(f.coleccion));
+    if (f.color !== '__all__') base = base.filter(r => normalize(r.Color) === normalize(f.color));
+    const allRefs = [...new Set(base.map(r => String(r.Ref||'').trim()).filter(Boolean))].sort();
+    const nq = normalize(query);
+    return allRefs.filter(r => normalize(r).includes(nq)).slice(0, 10);
+}
+
+function initPendientesSearch() {
+    const input = document.getElementById('p-f-search');
+    const dd = document.getElementById('p-search-dropdown');
+    let selIdx = -1;
+
+    function close() { dd.classList.add('hidden'); selIdx = -1; }
+
+    function render(matches, query) {
+        dd.innerHTML = '';
+        if (!matches.length) {
+            dd.innerHTML = '<div class="p-search-empty">Sin resultados</div>';
+            dd.classList.remove('hidden'); selIdx = -1; return;
+        }
+        const nq = normalize(query);
+        matches.forEach((ref, i) => {
+            const div = document.createElement('div');
+            div.className = 'p-search-item';
+            const idx = normalize(ref).indexOf(nq);
+            if (idx >= 0) {
+                div.innerHTML = ref.slice(0, idx) + '<span class="match">' + ref.slice(idx, idx + query.length) + '</span>' + ref.slice(idx + query.length);
+            } else { div.textContent = ref; }
+            div.dataset.value = ref;
+            div.addEventListener('mousedown', e => { e.preventDefault(); input.value = ref; close(); applyPFilters(); });
+            dd.appendChild(div);
+        });
+        selIdx = -1; dd.classList.remove('hidden');
+    }
+
+    input.addEventListener('input', () => {
+        const val = input.value.trim();
+        if (val.length >= 3) { render(getRefsForAutocomplete(val), val); }
+        else { close(); }
+        applyPFilters();
+    });
+
+    input.addEventListener('keydown', e => {
+        const items = dd.querySelectorAll('.p-search-item:not(.p-search-empty)');
+        if (e.key === 'ArrowDown') { e.preventDefault(); selIdx = Math.min(++selIdx, items.length - 1); items.forEach((el, i) => el.classList.toggle('bg-blue-50', i === selIdx)); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); selIdx = Math.max(--selIdx, 0); items.forEach((el, i) => el.classList.toggle('bg-blue-50', i === selIdx)); }
+        else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (selIdx >= 0 && items[selIdx]) { input.value = items[selIdx].dataset.value; }
+            close(); applyPFilters();
+        } else if (e.key === 'Escape') { close(); }
+    });
+
+    input.addEventListener('blur', () => setTimeout(close, 200));
+
+    // Close on click outside
+    document.addEventListener('mousedown', e => { if (!e.target.closest('#p-f-search, #p-search-dropdown')) close(); });
 }
 
 function showPTab(tab) {
