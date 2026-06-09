@@ -107,37 +107,38 @@
     .filter-select { border: none; background: #eff4ff; border-radius: 4px; padding: 4px 8px; font-size: 14px; font-weight: 600; color: #001e40; }
     .filter-select:focus { outline: none; box-shadow: 0 0 0 2px #67bafd; }
     .btn-p { cursor: pointer; transition: .2s; display: inline-flex; align-items: center; gap: 6px; }
-    #page-pendientes .p-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); transition: .2s; }
-    #page-pendientes .p-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.12); transform: translateY(-1px); }
-    #page-pendientes .p-filter { border:1px solid #e2e8f0; border-radius:8px; padding:6px 10px; font-size:13px; background:white; width:100%; }
-    #page-pendientes.p-dark { background: #0f172a; color: #e2e8f0; }
-    #page-pendientes.p-dark .p-card { background: #1e293b !important; box-shadow: 0 1px 3px rgba(0,0,0,.3) !important; }
-    #page-pendientes.p-dark .p-filter { background: #1e293b; border-color: #475569; color: #e2e8f0; }
-    #page-pendientes.p-dark .text-gray-500 { color: #94a3b8 !important; }
-    #page-pendientes.p-dark .text-gray-900 { color: #f1f5f9 !important; }
-    #page-pendientes.p-dark .bg-white { background: #1e293b !important; }
-    #page-pendientes.p-dark .border-gray-200 { border-color: #334155 !important; }
-    #page-pendientes.p-dark #p-drop-zone { background: #1e293b; border-color: #475569; }
+    #page-pendientes .p-card, #dashboard .p-card, #page-revision-cierre .p-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); transition: .2s; }
+    #page-pendientes .p-card:hover, #dashboard .p-card:hover, #page-revision-cierre .p-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.12); transform: translateY(-1px); }
+    #page-pendientes .p-filter, #dashboard .p-filter { border:1px solid #e2e8f0; border-radius:8px; padding:6px 10px; font-size:13px; background:white; width:100%; }
+    #page-pendientes.p-dark, .dark #dashboard, .dark #page-revision-cierre { background: #0f172a; color: #e2e8f0; }
+    #page-pendientes.p-dark .p-card, .dark #dashboard .p-card, .dark #page-revision-cierre .p-card { background: #1e293b !important; box-shadow: 0 1px 3px rgba(0,0,0,.3) !important; }
+    #page-pendientes.p-dark .p-filter, .dark #dashboard .p-filter { background: #1e293b; border-color: #475569; color: #e2e8f0; }
+    #page-pendientes.p-dark .text-gray-500, .dark #dashboard .text-gray-500, .dark #page-revision-cierre .text-gray-500 { color: #94a3b8 !important; }
+    #page-pendientes.p-dark .text-gray-900, .dark #dashboard .text-gray-900, .dark #page-revision-cierre .text-gray-900 { color: #f1f5f9 !important; }
+    #page-pendientes.p-dark .bg-white, .dark #dashboard .bg-white, .dark #page-revision-cierre .bg-white { background: #1e293b !important; }
+    #page-pendientes.p-dark .border-gray-200, .dark #dashboard .border-gray-200, .dark #page-revision-cierre .border-gray-200 { border-color: #334155 !important; }
+    #page-pendientes.p-dark .border-outline-variant, .dark #dashboard .border-outline-variant, .dark #page-revision-cierre .border-outline-variant { border-color: #334155 !important; }
+    #page-pendientes.p-dark .shadow-\[0px_2px_4px_rgba\(0\2c 0\2c 0\2c 0\.05\)\], .dark #dashboard .shadow-\[0px_2px_4px_rgba\(0\2c 0\2c 0\2c 0\.05\)\], .dark #page-revision-cierre .shadow-\[0px_2px_4px_rgba\(0\2c 0\2c 0\2c 0\.05\)\] { box-shadow: 0 1px 3px rgba(0,0,0,.3) !important; }
+    #page-pendientes.p-dark #p-drop-zone, .dark #dashboard #drop-zone { background: #1e293b; border-color: #475569; }
 /* === PENDIENTES DETAIL TABLE === */
-.p-main-table { width:100%!important; border-collapse:collapse; font-family:'IBM Plex Sans',sans-serif; font-size:13px; }
-.p-main-table thead th { background:#1e293b!important; color:#fff!important; padding:6px 10px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; position:sticky; top:0; z-index:11; border-bottom:2px solid #334155; }
-.p-main-table tbody td { padding:6px 10px; line-height:1.4; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
-.p-main-table tbody tr:nth-child(even) { background:#f8fafc; }
-.p-main-table tbody tr:hover { background:#e0f2fe; }
-.p-main-table .text-right { text-align:right; }
-.p-main-table .font-mono { font-family:'IBM Plex Mono',monospace; }
+.p-main-table, .data-table { width:100%!important; border-collapse:collapse; font-family:'IBM Plex Sans',sans-serif; font-size:13px; }
+.p-main-table thead th, .data-table thead th { background:#1e293b!important; color:#fff!important; padding:6px 10px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; position:sticky; top:0; z-index:11; border-bottom:2px solid #334155; }
+.p-main-table tbody td, .data-table tbody td { padding:6px 10px; line-height:1.4; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+.p-main-table tbody tr:nth-child(even), .data-table tbody tr:nth-child(even) { background:#f8fafc; }
+.p-main-table tbody tr:hover, .data-table tbody tr:hover { background:#e0f2fe; }
+.p-main-table .text-right, .data-table .text-right { text-align:right; }
+.p-main-table .font-mono, .data-table .font-mono { font-family:'IBM Plex Mono',monospace; }
 .month-badge { display:inline-block; padding:2px 8px; border-radius:20px; color:#fff; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; }
-/* DataTable overrides for pendientes table */
-#p-tab-data .dataTables_wrapper .dataTables_length { margin:0; padding:0; }
-#p-tab-data .dataTables_wrapper .dataTables_filter { margin:0; padding:0; }
+/* DataTable wrapper overrides */
+#p-tab-data .dataTables_wrapper .dataTables_length, #p-tab-data .dataTables_wrapper .dataTables_filter { margin:0; padding:0; }
 #p-tab-data .dataTables_wrapper .dataTables_filter input { border:1px solid #d1d5db!important; border-radius:8px; padding:6px 12px 6px 32px; font-size:13px; width:200px; }
 #p-tab-data .dataTables_wrapper .dataTables_filter input:focus { border-color:#3b82f6!important; box-shadow:0 0 0 2px rgba(59,130,246,.2); outline:none; }
 #p-tab-data .dataTables_wrapper .dataTables_length select { border:1px solid #d1d5db; border-radius:6px; padding:4px 24px 4px 8px; font-size:13px; background:white; cursor:pointer; }
-/* Dark overrides */
-#page-pendientes.p-dark .p-main-table thead th { background:#0f172a!important; border-bottom-color:#334155; }
-#page-pendientes.p-dark .p-main-table tbody td { border-bottom-color:#1e293b; color:#e2e8f0; }
-#page-pendientes.p-dark .p-main-table tbody tr:nth-child(even) { background:#1a2332; }
-#page-pendientes.p-dark .p-main-table tbody tr:hover { background:#1e3a5f; }
+/* Dark table overrides */
+#page-pendientes.p-dark .p-main-table thead th, .dark #dashboard .data-table thead th, .dark #page-revision-cierre .data-table thead th { background:#0f172a!important; border-bottom-color:#334155; }
+#page-pendientes.p-dark .p-main-table tbody td, .dark #dashboard .data-table tbody td, .dark #page-revision-cierre .data-table tbody td { border-bottom-color:#1e293b; color:#e2e8f0; }
+#page-pendientes.p-dark .p-main-table tbody tr:nth-child(even), .dark #dashboard .data-table tbody tr:nth-child(even), .dark #page-revision-cierre .data-table tbody tr:nth-child(even) { background:#1a2332; }
+#page-pendientes.p-dark .p-main-table tbody tr:hover, .dark #dashboard .data-table tbody tr:hover, .dark #page-revision-cierre .data-table tbody tr:hover { background:#1e3a5f; }
 #page-pendientes.p-dark #p-tab-data .dataTables_wrapper .dataTables_filter input { background:#0f172a; color:#e2e8f0; border-color:#475569!important; }
 #page-pendientes.p-dark #p-tab-data .dataTables_wrapper .dataTables_length select { background:#0f172a; color:#e2e8f0; border-color:#475569; }
 #page-pendientes.p-dark .p-table-top { background:#1e293b; border-color:#334155; }
@@ -159,7 +160,7 @@
 /* Responsive */
 @media (max-width:767px) {
     #p-tab-data .overflow-x-auto { overflow-x:auto; }
-    .p-main-table thead th, .p-main-table tbody td { white-space:nowrap; }
+    .p-main-table thead th, .p-main-table tbody td, .data-table thead th, .data-table tbody td { white-space:nowrap; }
 }
     @media print {
         @page { margin: 12mm; size: A4 landscape; }
@@ -242,13 +243,13 @@
         <div class="flex flex-col gap-1">
             <label class="font-label-caps text-[10px] text-outline uppercase">Ref</label>
             <div class="relative">
-                <input type="text" id="filter-ref" class="filter-select min-w-[120px]" placeholder="Buscar ref..." autocomplete="off" />
+                <input type="text" id="filter-ref" class="p-filter min-w-[120px]" placeholder="Buscar ref..." autocomplete="off" />
                 <div id="ref-dropdown" class="absolute top-full left-0 w-full bg-white border border-outline-variant rounded shadow-md max-h-60 overflow-y-auto hidden z-50"></div>
             </div>
         </div>
         <div class="flex flex-col gap-1">
             <label class="font-label-caps text-[10px] text-outline uppercase">Color</label>
-            <select id="filter-color" class="filter-select min-w-[120px]"><option value="__all__">Todos los colores</option></select>
+            <select id="filter-color" class="p-filter min-w-[120px]"><option value="__all__">Todos los colores</option></select>
         </div>
         <div class="flex flex-col gap-1">
             <label class="font-label-caps text-[10px] text-outline uppercase"> </label>
@@ -271,17 +272,17 @@
 
         <!-- KPIs -->
         <div id="kpi-container" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-md">
-            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">Tendencia</p><p class="font-headline-md text-headline-md text-secondary" id="kpi-registros">—</p></div>
-            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">Total Agotados</p><p class="font-headline-md text-headline-md text-error" id="kpi-total-agotados">—</p></div>
-            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">Tasa Agotados</p><p class="font-headline-md text-headline-md text-secondary" id="kpi-tasa">—</p></div>
-            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">Total Inventario</p><p class="font-headline-md text-headline-md text-primary" id="kpi-cierre">—</p></div>
-            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">Total de Cierre</p><p class="font-headline-md text-headline-md text-on-secondary-fixed-variant" id="kpi-promedio">—</p></div>
-            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">TOTAL REQUERIMIENTO FUTURAS CAMPAÑAS</p><p class="font-headline-md text-headline-md text-primary" id="kpi-total-refs">—</p></div>
+            <div class="p-card"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">Tendencia</p><p class="font-headline-md text-headline-md text-secondary" id="kpi-registros">—</p></div>
+            <div class="p-card"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">Total Agotados</p><p class="font-headline-md text-headline-md text-error" id="kpi-total-agotados">—</p></div>
+            <div class="p-card"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">Tasa Agotados</p><p class="font-headline-md text-headline-md text-secondary" id="kpi-tasa">—</p></div>
+            <div class="p-card"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">Total Inventario</p><p class="font-headline-md text-headline-md text-primary" id="kpi-cierre">—</p></div>
+            <div class="p-card"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">Total de Cierre</p><p class="font-headline-md text-headline-md text-on-secondary-fixed-variant" id="kpi-promedio">—</p></div>
+            <div class="p-card"><p class="font-label-caps text-label-caps text-outline uppercase mb-2">TOTAL REQUERIMIENTO FUTURAS CAMPAÑAS</p><p class="font-headline-md text-headline-md text-primary" id="kpi-total-refs">—</p></div>
         </div>
 
         <div class="grid grid-cols-12 gap-md">
             <!-- ALERTS PANEL -->
-            <div class="col-span-12 lg:col-span-3 bg-white rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant flex flex-col max-h-[420px]">
+            <div class="col-span-12 lg:col-span-3 p-card flex flex-col max-h-[420px]">
                 <div class="p-4 pb-0 flex-none">
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="font-headline-sm text-headline-sm text-primary">Alertas Críticas</h3>
@@ -297,7 +298,7 @@
             </div>
 
             <!-- CIERRE POR COLOR -->
-            <div class="col-span-12 lg:col-span-5 bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant flex flex-col max-h-[420px]">
+            <div class="col-span-12 lg:col-span-5 p-card flex flex-col max-h-[420px]">
                 <h3 class="font-headline-sm text-headline-sm text-primary mb-2 flex-none">Cierre por Color</h3>
                 <div class="flex-1 min-h-0" style="position:relative">
                     <canvas id="chartCierre" style="width:100%;height:100%;display:block"></canvas>
@@ -306,22 +307,22 @@
             </div>
 
             <!-- REQUERIMIENTO FUTURAS CAMPAÑAS -->
-            <div class="col-span-12 lg:col-span-4 bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant flex flex-col max-h-[420px]">
+            <div class="col-span-12 lg:col-span-4 p-card flex flex-col max-h-[420px]">
                 <h3 class="font-headline-sm text-headline-sm text-primary mb-2 flex-none">Requerimiento Futuras Campañas</h3>
                 <div class="flex-1 min-h-0" style="position:relative"><canvas id="chartBars" style="width:100%;height:100%;display:block"></canvas></div>
             </div>
         </div>
 
         <!-- MAIN TABLE -->
-        <div class="bg-white rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant overflow-hidden">
+        <div class="p-card overflow-hidden">
             <div class="p-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low/50">
                 <h3 class="font-headline-sm text-headline-sm text-primary">Detalle de Inventario</h3>
                 <span class="text-xs text-outline" id="table-count">0 registros</span>
             </div>
             <div class="overflow-x-auto custom-scrollbar" style="max-height:500px">
-                <table class="w-full text-left zebra-table">
+                <table class="w-full text-left data-table">
                     <thead class="sticky top-0 z-10">
-                        <tr id="table-head" class="bg-surface border-b border-outline-variant font-label-caps text-label-caps text-outline uppercase"></tr>
+                        <tr id="table-head" class="border-b border-outline-variant font-label-caps text-label-caps text-outline uppercase"></tr>
                     </thead>
                     <tbody id="table-body" class="text-body-md"></tbody>
                 </table>
@@ -330,17 +331,17 @@
 
         <!-- BOTTOM -->
         <div class="grid grid-cols-12 gap-md">
-            <div class="col-span-12 lg:col-span-8 bg-white rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant p-md">
+            <div class="col-span-12 lg:col-span-8 p-card">
                 <h3 class="font-headline-sm text-headline-sm text-primary mb-4">Top 20 - Peor Stock</h3>
                 <div id="bottom-items" class="grid grid-cols-4 gap-4"></div>
             </div>
             <div class="col-span-12 lg:col-span-4 space-y-md">
-                <div class="bg-primary text-on-primary p-md rounded-xl shadow-lg relative overflow-hidden">
+                <div class="bg-primary text-on-primary p-card shadow-lg relative overflow-hidden">
                     <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-[100px] opacity-10">insights</span>
                     <h4 class="font-label-caps text-label-caps uppercase opacity-80 mb-2">Insight</h4>
                     <p class="font-headline-sm text-headline-sm leading-tight" id="insight-text">Cargue un archivo de datos para ver análisis inteligente.</p>
                 </div>
-                <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant border-l-4 border-secondary">
+                <div class="p-card border-l-4 border-secondary">
                     <p class="font-label-caps text-[10px] text-outline uppercase mb-1">Recomendación</p>
                     <p class="font-body-md text-primary font-semibold" id="recomendacion-text">Los datos mostrarán recomendaciones automáticas.</p>
                 </div>
@@ -360,7 +361,7 @@
 
         <!-- Group KPIs -->
         <div id="rev-kpi-container" class="grid grid-cols-1 md:grid-cols-3 gap-md">
-            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant border-l-4 border-l-red-500">
+            <div class="p-card border-l-4 border-l-red-500">
                 <p class="font-label-caps text-label-caps text-outline uppercase mb-1">Tend+ Cierre-</p>
                 <div class="flex gap-4 text-body-md">
                     <span>Reg: <strong id="rev-kpi-tpc-count">0</strong></span>
@@ -368,7 +369,7 @@
                     <span>Cierre: <strong class="text-error" id="rev-kpi-tpc-cierre">0</strong></span>
                 </div>
             </div>
-            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant border-l-4 border-l-orange-400">
+            <div class="p-card border-l-4 border-l-orange-400">
                 <p class="font-label-caps text-label-caps text-outline uppercase mb-1">Tend- Cierre+</p>
                 <div class="flex gap-4 text-body-md">
                     <span>Reg: <strong id="rev-kpi-tcp-count">0</strong></span>
@@ -376,7 +377,7 @@
                     <span>Cierre: <strong class="text-emerald-600" id="rev-kpi-tcp-cierre">0</strong></span>
                 </div>
             </div>
-            <div class="bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant border-l-4 border-l-gray-400">
+            <div class="p-card border-l-4 border-l-gray-400">
                 <p class="font-label-caps text-label-caps text-outline uppercase mb-1">Tend- Cierre-</p>
                 <div class="flex gap-4 text-body-md">
                     <span>Reg: <strong id="rev-kpi-tcc-count">0</strong></span>
@@ -388,41 +389,41 @@
 
         <!-- Comparison chart row -->
         <div class="grid grid-cols-12 gap-md">
-            <div class="col-span-12 lg:col-span-6 bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant">
+            <div class="col-span-12 lg:col-span-6 p-card">
                 <h3 class="font-headline-sm text-headline-sm text-primary mb-2">Comparación Cierre por Grupo</h3>
                 <div style="position:relative;height:250px"><canvas id="rev-chart-cierre" style="width:100%;height:100%"></canvas></div>
             </div>
-            <div class="col-span-12 lg:col-span-6 bg-white p-md rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant">
+            <div class="col-span-12 lg:col-span-6 p-card">
                 <h3 class="font-headline-sm text-headline-sm text-primary mb-2">Comparación Agotados por Grupo</h3>
                 <div style="position:relative;height:250px"><canvas id="rev-chart-agot" style="width:100%;height:100%"></canvas></div>
             </div>
         </div>
 
         <!-- Existing table -->
-        <div class="bg-white rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-outline-variant p-md">
+        <div class="p-card">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="font-headline-sm text-headline-sm text-primary">Detalle Revisión Cierre</h3>
                 <span class="text-body-md text-outline" id="rev-table-count">0 registros</span>
             </div>
             <div class="overflow-x-auto custom-scrollbar" style="max-height:500px">
-                <table class="w-full text-left zebra-table">
+                <table class="w-full text-left data-table">
                     <thead class="sticky top-0 z-10">
-                        <tr class="bg-surface border-b border-outline-variant font-label-caps text-label-caps text-outline uppercase">
-                            <th class="px-md py-4 whitespace-nowrap">ES VMI</th>
-                            <th class="px-md py-4 whitespace-nowrap">ESTADO</th>
-                            <th class="px-md py-4 whitespace-nowrap">REF</th>
-                            <th class="px-md py-4 whitespace-nowrap">COLOR</th>
-                            <th class="px-md py-4 whitespace-nowrap">TALLA</th>
-                            <th class="px-md py-4 whitespace-nowrap">DESCRIPCION</th>
-                            <th class="px-md py-4 whitespace-nowrap">TENDENCIA</th>
-                            <th class="px-md py-4 whitespace-nowrap">PRY C8</th>
-                            <th class="px-md py-4 whitespace-nowrap">CUMPLIMIENTO</th>
-                            <th class="px-md py-4 whitespace-nowrap text-right">AGOT</th>
-                            <th class="px-md py-4 whitespace-nowrap text-right">INVENTARIO</th>
-                            <th class="px-md py-4 whitespace-nowrap text-right">CIERRE</th>
-                            <th class="px-md py-4 whitespace-nowrap text-right">DIAS INVENTARIO</th>
-                            <th class="px-md py-4 whitespace-nowrap text-right">TEND DIA</th>
-                            <th class="px-md py-4 whitespace-nowrap text-center">GRUPO</th>
+                        <tr class="font-label-caps text-label-caps text-outline uppercase">
+                            <th>ES VMI</th>
+                            <th>ESTADO</th>
+                            <th>REF</th>
+                            <th>COLOR</th>
+                            <th>TALLA</th>
+                            <th>DESCRIPCION</th>
+                            <th>TENDENCIA</th>
+                            <th>PRY C8</th>
+                            <th>CUMPLIMIENTO</th>
+                            <th class="text-right">AGOT</th>
+                            <th class="text-right">INVENTARIO</th>
+                            <th class="text-right">CIERRE</th>
+                            <th class="text-right">DIAS INVENTARIO</th>
+                            <th class="text-right">TEND DIA</th>
+                            <th class="text-center">GRUPO</th>
                         </tr>
                     </thead>
                     <tbody id="rev-table-body" class="text-body-md"></tbody>

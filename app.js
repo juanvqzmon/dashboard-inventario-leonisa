@@ -534,21 +534,21 @@ function renderTable(columns, colRef, colDesc, colStock) {
 
     const displayCols = columns.filter(c => !c.startsWith('__'));
     thead.innerHTML = displayCols.map(c =>
-        `<th class="px-md py-4 whitespace-nowrap">${c}</th>`
-    ).join('') + `<th class="px-md py-4 text-center">Estado</th><th class="px-md py-4 text-right">Prioridad</th>`;
+        `<th>${c}</th>`
+    ).join('') + `<th class="text-center">Estado</th><th class="text-right">Prioridad</th>`;
 
     tbody.innerHTML = filteredData.slice(0, 500).map(row => {
         const est = getEstadoColor(row.__estado);
         const pri = row.__prioridad;
         const cells = displayCols.map(c =>
-            `<td class="px-md py-3 whitespace-nowrap">${row[c] ?? ''}</td>`
+            `<td>${row[c] ?? ''}</td>`
         ).join('');
-        return `<tr class="hover:bg-surface-container transition-colors">
+        return `<tr>
             ${cells}
-            <td class="px-md py-3 text-center">
+            <td class="text-center">
                 <span class="px-3 py-1 rounded font-bold text-[11px]" style="background:${est.bg};color:${est.text}">${row.__estado}</span>
             </td>
-            <td class="px-md py-3 text-right font-bold" style="color:${pri.color}">${pri.label}</td>
+            <td class="text-right font-bold" style="color:${pri.color}">${pri.label}</td>
         </tr>`;
     }).join('') || '<tr><td colspan="99" class="text-center p-4 text-outline">Sin resultados</td></tr>';
 }
@@ -623,24 +623,24 @@ function renderRevisionTable(colRef, colColor, colDesc, colStock, colCierre, col
         const estColor = getEstadoColor(estadoCode);
         const grupoColor = grupo === 'Tend+ Cierre-' ? '#ef4444' : grupo === 'Tend- Cierre+' ? '#f59e0b' : '#6b7280';
 
-        return `<tr class="hover:bg-surface-container transition-colors">
-            <td class="px-md py-3 whitespace-nowrap">${esVmi}</td>
-            <td class="px-md py-3 whitespace-nowrap text-center">
+        return `<tr>
+            <td>${esVmi}</td>
+            <td class="text-center">
                 <span class="px-2 py-1 rounded font-bold text-[11px]" style="background:${estColor.bg};color:${estColor.text}">${estadoFull}</span>
             </td>
-            <td class="px-md py-3 whitespace-nowrap font-semibold text-primary">${ref}</td>
-            <td class="px-md py-3 whitespace-nowrap">${color}</td>
-            <td class="px-md py-3 whitespace-nowrap">${talla}</td>
-            <td class="px-md py-3 whitespace-nowrap">${desc}</td>
-            <td class="px-md py-3 whitespace-nowrap">${tendencia}</td>
-            <td class="px-md py-3 whitespace-nowrap">${pryC8}</td>
-            <td class="px-md py-3 whitespace-nowrap">${cumplimiento}</td>
-            <td class="px-md py-3 whitespace-nowrap text-right font-data-mono">${agot}</td>
-            <td class="px-md py-3 whitespace-nowrap text-right font-data-mono">${stock}</td>
-            <td class="px-md py-3 whitespace-nowrap text-right font-data-mono">${cierre}</td>
-            <td class="px-md py-3 whitespace-nowrap text-right">${diasInv}</td>
-            <td class="px-md py-3 whitespace-nowrap text-right">${tendDia}</td>
-            <td class="px-md py-3 whitespace-nowrap text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold text-white" style="background:${grupoColor}">${grupo}</span></td>
+            <td class="font-semibold text-primary">${ref}</td>
+            <td>${color}</td>
+            <td>${talla}</td>
+            <td>${desc}</td>
+            <td>${tendencia}</td>
+            <td>${pryC8}</td>
+            <td>${cumplimiento}</td>
+            <td class="text-right font-data-mono">${agot}</td>
+            <td class="text-right font-data-mono">${stock}</td>
+            <td class="text-right font-data-mono">${cierre}</td>
+            <td class="text-right">${diasInv}</td>
+            <td class="text-right">${tendDia}</td>
+            <td class="text-center"><span class="px-2 py-0.5 rounded text-[10px] font-bold text-white" style="background:${grupoColor}">${grupo}</span></td>
         </tr>`;
     }).join('') || '<tr><td colspan="15" class="text-center p-4 text-outline">Sin resultados</td></tr>';
 }
