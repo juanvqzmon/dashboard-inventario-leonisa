@@ -635,7 +635,9 @@ function initPendientes() {
     dz.addEventListener('dragleave', () => dz.classList.remove('border-blue-500','bg-blue-50'));
     dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('border-blue-500','bg-blue-50'); if (e.dataTransfer.files[0]) loadPFile(e.dataTransfer.files[0]); });
     document.querySelectorAll('#p-filters-panel select, #p-filters-panel input').forEach(el => el.addEventListener('change', applyPFilters));
-    document.getElementById('p-f-search').addEventListener('input', applyPFilters);
+    const pSearch = document.getElementById('p-f-search');
+    pSearch.addEventListener('input', applyPFilters);
+    pSearch.addEventListener('keyup', applyPFilters);
 }
 
 function showPTab(tab) {
