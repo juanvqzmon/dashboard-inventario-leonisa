@@ -275,16 +275,11 @@ function populateFilters(columns, colRef, colColor) {
         applyFilters(cols, cr, cc, cs, ca, cd, ccat);
     }
 
-    let debounceTimer;
-
     refInput.addEventListener('input', () => {
         const val = refInput.value.trim();
         renderDropdown(val);
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            updateColorSelect(val);
-            applyCurrentFilters();
-        }, 300);
+        updateColorSelect(val);
+        applyCurrentFilters();
     });
 
     refInput.addEventListener('keydown', (e) => {
