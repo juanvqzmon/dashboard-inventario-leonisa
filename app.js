@@ -1246,6 +1246,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tPosCNeg = [], tNegCPos = [], tNegCNeg = [];
         filteredData.forEach(r => {
+            if (colColor && /total/i.test(String(r[colColor] ?? ''))) return;
             const tend = colTendencia ? parseNum(r[colTendencia]) : 0;
             const cierre = colCierre ? parseNum(r[colCierre]) : 0;
             if (tend > 0 && cierre < 0) tPosCNeg.push(r);
@@ -1258,7 +1259,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tNegCPos.length) html += buildTable(tNegCPos, 'Tend- Cierre+');
         if (tNegCNeg.length) html += buildTable(tNegCNeg, 'Tend- Cierre-');
         if (tPosCNeg.length + tNegCPos.length + tNegCNeg.length === 0) {
-            html += buildTable(filteredData, 'Datos');
+            const filtered = colColor ? filteredData.filter(r => !/total/i.test(String(r[colColor] ?? ''))) : filteredData;
+            html += buildTable(filtered, 'Datos');
         }
         html += '</body></html>';
 
