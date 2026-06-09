@@ -118,12 +118,39 @@
     #page-pendientes.p-dark .bg-white { background: #1e293b !important; }
     #page-pendientes.p-dark .border-gray-200 { border-color: #334155 !important; }
     #page-pendientes.p-dark #p-drop-zone { background: #1e293b; border-color: #475569; }
-    #page-pendientes .dataTables_wrapper .dataTables_filter input { border: 1px solid #e2e8f0 !important; border-radius: 8px !important; padding: 6px 12px !important; }
-    #page-pendientes.p-dark .dataTables_wrapper .dataTables_filter input { background: #1e293b; border-color: #475569 !important; color: #e2e8f0; }
-    #page-pendientes.p-dark .dataTables_wrapper .dataTables_length select { background: #1e293b; color: #e2e8f0; border-color: #475569; }
-    #page-pendientes.p-dark table.dataTable { color: #e2e8f0; }
-    #page-pendientes.p-dark table.dataTable tbody tr { background: #1e293b; }
-    #page-pendientes.p-dark table.dataTable tbody tr:hover { background: #334155; }
+/* === PENDIENTES DETAIL TABLE === */
+.p-main-table { width:100%!important; border-collapse:collapse; font-family:'IBM Plex Sans',sans-serif; font-size:13px; }
+.p-main-table thead th { background:#1e293b!important; color:#fff!important; padding:6px 10px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; position:sticky; top:0; z-index:11; border-bottom:2px solid #334155; }
+.p-main-table tbody td { padding:6px 10px; line-height:1.4; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+.p-main-table tbody tr:nth-child(even) { background:#f8fafc; }
+.p-main-table tbody tr:hover { background:#e0f2fe; }
+.p-main-table .text-right { text-align:right; }
+.p-main-table .font-mono { font-family:'IBM Plex Mono',monospace; }
+.month-badge { display:inline-block; padding:2px 8px; border-radius:20px; color:#fff; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; }
+/* DataTable overrides for pendientes table */
+#p-tab-data .dataTables_wrapper .dataTables_length { margin:0; padding:0; }
+#p-tab-data .dataTables_wrapper .dataTables_filter { margin:0; padding:0; }
+#p-tab-data .dataTables_wrapper .dataTables_filter input { border:1px solid #d1d5db!important; border-radius:8px; padding:6px 12px 6px 32px; font-size:13px; width:200px; }
+#p-tab-data .dataTables_wrapper .dataTables_filter input:focus { border-color:#3b82f6!important; box-shadow:0 0 0 2px rgba(59,130,246,.2); outline:none; }
+#p-tab-data .dataTables_wrapper .dataTables_length select { border:1px solid #d1d5db; border-radius:6px; padding:4px 24px 4px 8px; font-size:13px; background:white; cursor:pointer; }
+/* Dark overrides */
+#page-pendientes.p-dark .p-main-table thead th { background:#0f172a!important; border-bottom-color:#334155; }
+#page-pendientes.p-dark .p-main-table tbody td { border-bottom-color:#1e293b; color:#e2e8f0; }
+#page-pendientes.p-dark .p-main-table tbody tr:nth-child(even) { background:#1a2332; }
+#page-pendientes.p-dark .p-main-table tbody tr:hover { background:#1e3a5f; }
+#page-pendientes.p-dark #p-tab-data .dataTables_wrapper .dataTables_filter input { background:#0f172a; color:#e2e8f0; border-color:#475569!important; }
+#page-pendientes.p-dark #p-tab-data .dataTables_wrapper .dataTables_length select { background:#0f172a; color:#e2e8f0; border-color:#475569; }
+#page-pendientes.p-dark .p-table-top { background:#1e293b; border-color:#334155; }
+#page-pendientes.p-dark .p-table-top .dataTables_length label { color:#94a3b8; }
+#page-pendientes.p-dark .p-table-top .dataTables_length select { background:#0f172a; color:#e2e8f0; border-color:#475569; }
+#page-pendientes.p-dark .p-table-top .dataTables_filter input { background:#0f172a; color:#e2e8f0; border-color:#475569!important; }
+#page-pendientes.p-dark .btn-excel-pendientes { background:#0f172a; border-color:#059669!important; color:#34d399!important; }
+#page-pendientes.p-dark .btn-excel-pendientes:hover { background:#1a2332; }
+/* Responsive */
+@media (max-width:767px) {
+    #p-tab-data .overflow-x-auto { overflow-x:auto; }
+    .p-main-table thead th, .p-main-table tbody td { white-space:nowrap; }
+}
     @media print {
         @page { margin: 12mm; size: A4 landscape; }
         #sidebar, #drop-zone, #global-search, #filters-bar, #btn-export-excel, #btn-export-pdf, [onclick] { display: none !important; }
@@ -473,15 +500,8 @@
     </div>
 
     <div id="p-tab-data" class="hidden flex-1 p-4">
-        <div class="p-card overflow-x-auto">
-            <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
-                <h4 class="font-bold text-sm">Detalle de Pedidos Pendientes</h4>
-                <div class="flex gap-2">
-                    <button class="btn-p text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50" onclick="exportPTableExcel()"><span class="material-symbols-outlined text-lg">file_download</span> Excel</button>
-                    <button class="btn-p text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50" onclick="exportPTableCSV()"><span class="material-symbols-outlined text-lg">table</span> CSV</button>
-                </div>
-            </div>
-            <table id="p-main-table" class="display w-full text-sm">
+        <div class="p-table-card bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,.08)] border border-gray-200">
+            <table id="p-main-table" class="p-main-table display">
                 <thead><tr id="p-table-head"></tr></thead>
                 <tbody id="p-table-body"></tbody>
             </table>
@@ -830,17 +850,103 @@ function renderPResumen() {
     document.getElementById('p-resumen-text').innerHTML = txt;
 }
 
+function formatPDate(v) {
+    if (!v) return '';
+    let d;
+    if (v instanceof Date) { d = v; }
+    else { d = new Date(v); }
+    if (isNaN(d.getTime())) return String(v);
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+}
+
 function initPTable() {
-    if (!pFilteredData.length || pDataTable) return;
+    if (!pFilteredData.length) return;
     if (typeof $ === 'undefined' || typeof $.fn.DataTable === 'undefined') return;
     pTableCols = P_DISPLAY_COLS.filter(c => c in pFilteredData[0]);
-    document.getElementById('p-table-head').innerHTML = pTableCols.map(c => '<th>' + c + '</th>').join('');
     const data = pFilteredData.map(r => pTableCols.map(c => r[c] ?? ''));
+
+    if (pDataTable) { pDataTable.destroy(); pDataTable = null; }
+
+    const monthColors = {
+        'ENERO':'#ef4444','FEBRERO':'#f97316','MARZO':'#eab308','ABRIL':'#22c55e',
+        'MAYO':'#14b8a6','JUNIO':'#3b82f6','JULIO':'#10b981','AGOSTO':'#8b5cf6',
+        'SEPTIEMBRE':'#f59e0b','OCTUBRE':'#ec4899','NOVIEMBRE':'#6366f1','DICIEMBRE':'#06b6d4'
+    };
+
+    const colWidths = {
+        'Mes Desp':'90px','Nped':'70px','FechaPed':'100px','Nombre':'160px',
+        'Ref':'60px','Color':'60px','TotalUnd':'90px','PrecioPed':'90px',
+        'TotalPrecioPed':'90px','Fdesp':'100px'
+    };
+
+    const columns = pTableCols.map(col => {
+        const cfg = {};
+        if (colWidths[col]) cfg.width = colWidths[col];
+        if (col === 'FechaPed' || col === 'Fdesp') {
+            cfg.render = function(data, type) {
+                if (type === 'filter' || type === 'sort') return data;
+                return formatPDate(data);
+            };
+        } else if (col === 'TotalPrecioPed' || col === 'PrecioPed') {
+            cfg.className = 'text-right font-mono';
+            cfg.render = function(data, type) {
+                const n = parseNum(data);
+                if (type === 'filter' || type === 'sort') return n;
+                if (n === 0) return '$0';
+                return '$' + Math.round(n).toLocaleString('es-CO');
+            };
+        } else if (col === 'TotalUnd') {
+            cfg.className = 'text-right';
+            cfg.render = function(data, type) {
+                const n = parseNum(data);
+                if (type === 'filter' || type === 'sort') return n;
+                return Math.round(n).toLocaleString();
+            };
+        } else if (col === 'Mes Desp') {
+            cfg.render = function(data, type) {
+                if (type === 'filter' || type === 'sort') return data;
+                const key = String(data).toUpperCase().trim();
+                const bg = monthColors[key] || '#6b7280';
+                return '<span class="month-badge" style="background:'+bg+'">'+data+'</span>';
+            };
+        } else if (col === 'Nombre') {
+            cfg.render = function(data, type) {
+                if (type === 'filter' || type === 'sort') return data;
+                return '<span title="'+data.replace(/"/g,'&quot;')+'">'+data+'</span>';
+            };
+        }
+        return cfg;
+    });
+
+    document.getElementById('p-table-head').innerHTML = pTableCols.map(c => '<th>'+c+'</th>').join('');
+
     try {
         pDataTable = $('#p-main-table').DataTable({
-            data: data, pageLength: 25, lengthMenu: [[10,25,50,100,-1],[10,25,50,100,'Todos']],
+            data: data, columns: columns,
+            pageLength: 25, lengthMenu: [[10,25,50,100,-1],[10,25,50,100,'Todos']],
             language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
-            order: [], destroy: true, deferRender: true
+            order: [], destroy: true, deferRender: true,
+            dom: '<"p-table-top flex justify-between items-center px-4 py-3 border-b border-gray-200"<"flex items-center gap-2"l><"flex items-center gap-2"f>>t<"flex justify-center items-center px-4 py-3 border-t border-gray-200"p>',
+            initComplete: function() {
+                const wrapper = $(this).closest('.dataTables_wrapper');
+                wrapper.find('.dataTables_length select').addClass('text-xs border border-gray-300 rounded px-2 py-1 bg-white cursor-pointer');
+                wrapper.find('.dataTables_length label').addClass('text-xs text-gray-500 flex items-center gap-1');
+                const filt = wrapper.find('.dataTables_filter');
+                filt.find('label').addClass('relative m-0');
+                filt.find('label').contents().filter(function(){ return this.nodeType===3; }).remove();
+                filt.find('input').addClass('pl-8 pr-3 py-1.5 text-xs rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-48');
+                filt.find('label').prepend('<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[16px] pointer-events-none">search</span>');
+                const topRight = wrapper.find('.p-table-top .flex.items-center.gap-2:last');
+                topRight.prepend(
+                    '<button onclick="exportPTableExcel()" class="btn-excel-pendientes flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-emerald-700 border border-emerald-400 rounded-lg hover:bg-emerald-50 transition-colors bg-white">' +
+                    '<span class="material-symbols-outlined text-[16px]">file_download</span> Excel</button>'
+                );
+            },
+            drawCallback: function() {
+                $(this).closest('.dataTables_wrapper').find('.dataTables_paginate .paginate_button').addClass('px-3 py-1 text-xs rounded border border-gray-200 hover:bg-gray-100 mx-0.5');
+                $(this).closest('.dataTables_wrapper').find('.dataTables_paginate .paginate_button.current').addClass('bg-blue-600 text-white border-blue-600');
+            }
         });
     } catch(e) { console.error('DataTable init:', e); }
 }
