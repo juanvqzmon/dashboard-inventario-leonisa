@@ -1024,13 +1024,15 @@ function initPTable() {
     });
 
     document.getElementById('p-table-head').innerHTML = pTableCols.map(c => '<th>'+c+'</th>').join('');
+    const fdespIdx = pTableCols.indexOf('Fdesp');
+    const initOrder = fdespIdx >= 0 ? [[fdespIdx, 'asc']] : [];
 
     try {
         pDataTable = $('#p-main-table').DataTable({
             data: data, columns: columns,
             pageLength: 25, lengthMenu: [[10,25,50,100,-1],[10,25,50,100,'Todos']],
             language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
-            order: [], destroy: true, deferRender: true,
+            order: initOrder, destroy: true, deferRender: true,
             dom: '<"p-table-top flex justify-between items-center px-4 py-3 border-b border-gray-200"<"flex items-center gap-2"l><"flex items-center gap-2"f>>t<"flex justify-center items-center px-4 py-3 border-t border-gray-200"p>',
             initComplete: function() {
                 const wrapper = $(this).closest('.dataTables_wrapper');
