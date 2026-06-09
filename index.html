@@ -694,7 +694,7 @@ function initPendientes() {
 }
 
 function getRefsForAutocomplete(query) {
-    if (!pAllData.length || query.length < 3) return [];
+    if (!pAllData.length || !query) return [];
     const f = getPFilters();
     let base = pAllData;
     if (f.mes !== '__all__') base = base.filter(r => normalize(r['Mes Desp']) === normalize(f.mes));
@@ -706,7 +706,10 @@ function getRefsForAutocomplete(query) {
     if (f.color !== '__all__') base = base.filter(r => normalize(r.Color) === normalize(f.color));
     const allRefs = [...new Set(base.map(r => String(r.Ref||'').trim()).filter(Boolean))].sort();
     const nq = normalize(query);
-    return allRefs.filter(r => normalize(r).includes(nq)).slice(0, 10);
+    return allRefs
+        .filter(r => normalize(r).includes(nq))
+        .sort((a, b) => normalize(a).indexOf(nq) - normalize(b).indexOf(nq))
+        .slice(0, 10);
 }
 
 function initPendientesSearch() {
@@ -739,7 +742,7 @@ function initPendientesSearch() {
 
     input.addEventListener('input', () => {
         const val = input.value.trim();
-        if (val.length >= 3) { render(getRefsForAutocomplete(val), val); }
+        if (val) { render(getRefsForAutocomplete(val), val); }
         else { close(); }
         applyPFilters();
     });
