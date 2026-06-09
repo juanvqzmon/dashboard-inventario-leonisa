@@ -989,12 +989,9 @@ function renderPResumen() {
 
 function formatPDate(v) {
     if (!v) return '';
-    let d;
-    if (v instanceof Date) { d = v; }
-    else { d = new Date(v); }
-    if (isNaN(d.getTime())) return String(v);
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+    const d = new Date(String(v).replace(/\s*\([^)]*\)\s*$/, ''));
+    if (isNaN(d)) return String(v);
+    return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function initPTable() {
@@ -1023,9 +1020,19 @@ function initPTable() {
     const columns = pTableCols.map(col => {
         const cfg = {};
         if (colWidths[col]) cfg.width = colWidths[col];
-        if (col === 'FechaPed' || col === 'Fdesp') {
+        if (col === 'FechaPed') {
             cfg.render = function(data, type) {
                 if (type === 'filter' || type === 'sort') return data;
+                return formatPDate(data);
+            };
+        } else if (col === 'Fdesp') {
+            cfg.render = function(data, type) {
+                if (type === 'filter') return data;
+                if (type === 'sort') {
+                    if (!data) return Number.MAX_SAFE_INTEGER;
+                    const d = new Date(String(data).replace(/\s*\([^)]*\)\s*$/, ''));
+                    return isNaN(d) ? Number.MAX_SAFE_INTEGER : d.getTime();
+                }
                 return formatPDate(data);
             };
         } else if (col === 'TotalPrecioPed' || col === 'PrecioPed') {
