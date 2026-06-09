@@ -944,7 +944,10 @@ function formatPDate(v) {
 
 function initPTable() {
     if (!pFilteredData.length) return;
-    if (typeof $ === 'undefined' || typeof $.fn.DataTable === 'undefined') return;
+    if (typeof $ === 'undefined' || typeof $.fn.DataTable === 'undefined') {
+        setTimeout(initPTable, 400);
+        return;
+    }
     pTableCols = P_DISPLAY_COLS.filter(c => c in pFilteredData[0]);
     const data = pFilteredData.map(r => pTableCols.map(c => r[c] ?? ''));
 
