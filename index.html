@@ -1197,7 +1197,6 @@ function exportPTableCSV() {
 let tAllData = [];
 let tFilteredData = [];
 let tHeaders = [];
-
 let tSearchTimer = null;
 
 function loadTFile(file) {
@@ -1209,63 +1208,71 @@ function loadTFile(file) {
         const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
         if (json.length === 0) { alert('El archivo está vacío.'); return; }
         tHeaders = Object.keys(json[0]);
-        const tipoCol = tHeaders.find(h => h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'') === 'tipo');
+        let tipoCol = tHeaders.find(h => h.toLowerCase().replace(/[^a-z0-9]/g,'') === 'tipo');
         if (!tipoCol) { alert('No se encontró la columna "tipo" en el archivo.'); return; }
-        tAllData = json.filter(r => String(r[tipoCol] ?? '').toLowerCase().includes('trascon'));
-        if (tAllData.length === 0) { alert('No se encontraron registros con "TrasCon" en la columna "' + tipoCol + '".'); }
+        tAllData = [];
+        for (let i = 0; i < json.length; i++) {
+            if (String(json[i][tipoCol] ?? '').toLowerCase().includes('trascon')) {
+                tAllData.push(json[i]);
+            }
+        }
+        if (tAllData.length === 0) { alert('No se encontraron registros con "TrasCon" en columna "' + tipoCol + '".'); }
         document.getElementById('t-drop-zone').classList.add('hidden');
         document.getElementById('t-content').classList.remove('hidden');
-        lsSave('trascon-data', { allData: tAllData, headers: tHeaders });
         renderTTable();
     };
     reader.readAsArrayBuffer(file);
 }
 
-let tKpiCache = '';
-
 function renderTTable() {
-    const q = document.getElementById('t-search').value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    tFilteredData = tAllData.filter(r => {
-        if (!q) return true;
-        const vals = r.__searchCache || (r.__searchCache = Object.values(r).map(v => String(v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')));
-        return vals.some(v => v.includes(q));
-    });
-    // KPIs (only rebuild if data changed)
-    const totalCant = tFilteredData.reduce((s, r) => {
-        const c = tHeaders.find(h => h.toLowerCase().includes('cant'));
-        return s + (Number(r[c]) || 0);
-    }, 0);
-    const colRef = tHeaders.find(h => h.toLowerCase() === 'ref' || h.toLowerCase().includes('referencia'));
+    const q = document.getElementById('t-search').value.toLowerCase();
+    tFilteredData = q ? [] : tAllData;
+    if (q) {
+        for (let i = 0; i < tAllData.length; i++) {
+            const r = tAllData[i];
+            for (let j = 0; j < tHeaders.length; j++) {
+                if (String(r[tHeaders[j]] ?? '').toLowerCase().includes(q)) {
+                    tFilteredData.push(r);
+                    break;
+                }
+            }
+        }
+    }
+    let cantCol = -1;
+    let refCol = -1;
+    for (let j = 0; j < tHeaders.length; j++) {
+        const h = tHeaders[j].toLowerCase();
+        if (h.includes('cant')) cantCol = j;
+        if (h === 'ref' || h.includes('referencia')) refCol = j;
+    }
+    let totalCantVal = 0;
     const refsSet = new Set();
-    if (colRef) tFilteredData.forEach(r => refsSet.add(r[colRef]));
-    const kpiHtml = `<div class="p-card border-l-4 border-l-blue-500"><p class="font-label-caps text-label-caps text-outline uppercase mb-1">Total Registros</p><p class="text-2xl font-extrabold text-blue-700">${tFilteredData.length.toLocaleString()}</p></div><div class="p-card border-l-4 border-l-emerald-500"><p class="font-label-caps text-label-caps text-outline uppercase mb-1">Total Unidades</p><p class="text-2xl font-extrabold text-emerald-600">${totalCant.toLocaleString()}</p></div><div class="p-card border-l-4 border-l-purple-500"><p class="font-label-caps text-label-caps text-outline uppercase mb-1">Referencias Únicas</p><p class="text-2xl font-extrabold text-purple-600">${refsSet.size.toLocaleString()}</p></div>`;
-    if (kpiHtml !== tKpiCache) { document.getElementById('t-kpi-row').innerHTML = kpiHtml; tKpiCache = kpiHtml; }
-    document.getElementById('t-row-count').textContent = tFilteredData.length + ' registros';
-    // Header (one-time)
-    const thead = document.getElementById('t-thead');
-    if (!thead._built) { thead.innerHTML = tHeaders.map(h => `<th class="px-3 py-2.5 text-left whitespace-nowrap">${h}</th>`).join(''); thead._built = true; }
-    // Body — batch DOM using DocumentFragment
-    const tbody = document.getElementById('t-tbody');
-    const frag = document.createDocumentFragment();
     for (let i = 0; i < tFilteredData.length; i++) {
         const r = tFilteredData[i];
-        const tr = document.createElement('tr');
-        tr.className = 'transition-colors';
-        for (let j = 0; j < tHeaders.length; j++) {
-            const td = document.createElement('td');
-            td.className = 'px-3 py-2 border-b border-gray-100 whitespace-nowrap';
-            td.textContent = r[tHeaders[j]] ?? '';
-            tr.appendChild(td);
-        }
-        frag.appendChild(tr);
+        if (cantCol !== -1) totalCantVal += Number(r[tHeaders[cantCol]]) || 0;
+        if (refCol !== -1) refsSet.add(r[tHeaders[refCol]]);
     }
-    tbody.innerHTML = '';
-    tbody.appendChild(frag);
+    document.getElementById('t-kpi-row').innerHTML = '<div class="p-card border-l-4 border-l-blue-500"><p class="font-label-caps text-label-caps text-outline uppercase mb-1">Total Registros</p><p class="text-2xl font-extrabold text-blue-700">' + tFilteredData.length.toLocaleString() + '</p></div><div class="p-card border-l-4 border-l-emerald-500"><p class="font-label-caps text-label-caps text-outline uppercase mb-1">Total Unidades</p><p class="text-2xl font-extrabold text-emerald-600">' + totalCantVal.toLocaleString() + '</p></div><div class="p-card border-l-4 border-l-purple-500"><p class="font-label-caps text-label-caps text-outline uppercase mb-1">Referencias Únicas</p><p class="text-2xl font-extrabold text-purple-600">' + refsSet.size.toLocaleString() + '</p></div>';
+    document.getElementById('t-row-count').textContent = tFilteredData.length + ' registros';
+    const thead = document.getElementById('t-thead');
+    if (!thead._built) { let h = ''; for (let j = 0; j < tHeaders.length; j++) h += '<th class="px-3 py-2.5 text-left whitespace-nowrap">' + tHeaders[j] + '</th>'; thead.innerHTML = h; thead._built = true; }
+    const tbody = document.getElementById('t-tbody');
+    let html = '';
+    for (let i = 0; i < tFilteredData.length; i++) {
+        const r = tFilteredData[i];
+        html += '<tr class="transition-colors">';
+        for (let j = 0; j < tHeaders.length; j++) {
+            const v = String(r[tHeaders[j]] ?? '');
+            html += '<td class="px-3 py-2 border-b border-gray-100 whitespace-nowrap">' + v.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</td>';
+        }
+        html += '</tr>';
+    }
+    tbody.innerHTML = html;
 }
 
 function onTSearchInput() {
     if (tSearchTimer) clearTimeout(tSearchTimer);
-    tSearchTimer = setTimeout(renderTTable, 150);
+    tSearchTimer = setTimeout(renderTTable, 200);
 }
 
 function exportTExcel() {
@@ -1279,16 +1286,8 @@ function exportTExcel() {
 (function() {
     const dz = document.getElementById('t-drop-zone');
     if (dz) {
-        dz.addEventListener('dragover', e => e.preventDefault());
-        dz.addEventListener('drop', e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) loadTFile(f); });
-    }
-    const saved = lsLoad('trascon-data');
-    if (saved && saved.allData && saved.allData.length) {
-        tAllData = saved.allData;
-        tHeaders = saved.headers || [];
-        document.getElementById('t-drop-zone').classList.add('hidden');
-        document.getElementById('t-content').classList.remove('hidden');
-        renderTTable();
+        dz.addEventListener('dragover', function(e) { e.preventDefault(); });
+        dz.addEventListener('drop', function(e) { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) loadTFile(f); });
     }
 })();
 </script>
