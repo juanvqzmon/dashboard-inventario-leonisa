@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script>
     tailwind.config = {
       darkMode: "class",
@@ -546,10 +547,13 @@
             <button class="btn-p text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50" onclick="exportTExcel()">
                 <span class="material-symbols-outlined text-lg">download</span> Exportar
             </button>
+            <button class="btn-p text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50" onclick="exportTCSV()">
+                <span class="material-symbols-outlined text-lg">file_download</span> CSV
+            </button>
         </div>
     </header>
 
-    <input type="file" id="t-file-input" class="hidden" accept=".xlsx,.xlsm,.xls" onchange="if(this.files[0]) loadTFile(this.files[0])"/>
+    <input type="file" id="t-file-input" class="hidden" accept=".xlsx,.xlsm,.xls,.csv" onchange="if(this.files[0]) loadTFile(this.files[0])"/>
 
     <div id="t-drop-zone" class="text-center py-12 px-5 mx-4 mt-4 border-2 border-dashed border-gray-300 rounded-2xl bg-white cursor-pointer shadow-sm" onclick="document.getElementById('t-file-input').click()">
         <span class="material-symbols-outlined text-5xl text-blue-500 mb-2">cloud_upload</span>
@@ -1198,17 +1202,51 @@ let tAllData = [];
 let tFilteredData = [];
 let tHeaders = [];
 let tSearchTimer = null;
+const TCACHE_KEY = 'vmi_trascon_csv';
 
 function loadTFile(file) {
+    const name = file.name.toLowerCase();
+    if (name.endsWith('.csv')) {
+        loadTCSV(file);
+    } else {
+        loadTXLSX(file);
+    }
+}
+
+function loadTCSV(file) {
     document.getElementById('t-drop-zone').classList.add('hidden');
     document.getElementById('t-content').classList.remove('hidden');
-    document.getElementById('t-kpi-row').innerHTML = '<div class="p-card col-span-3"><p class="text-center text-gray-500">Procesando archivo, espere...</p></div>';
+    document.getElementById('t-kpi-row').innerHTML = '<div class="p-card col-span-3"><p class="text-center text-gray-500">Leyendo CSV...</p></div>';
+    Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+            if (!results.data || !results.data.length) { alert('El archivo CSV está vacío.'); return; }
+            tHeaders = results.meta.fields || Object.keys(results.data[0]);
+            const tipoCol = tHeaders.find(function(h) { return h.toLowerCase().replace(/[^a-z0-9]/g,'') === 'tipo'; });
+            if (!tipoCol) { alert('No se encontró la columna "tipo" en el CSV.'); return; }
+            tAllData = [];
+            for (let i = 0; i < results.data.length; i++) {
+                const r = results.data[i];
+                if (String(r[tipoCol] ?? '').toLowerCase().includes('trascon')) {
+                    tAllData.push(r);
+                }
+            }
+            if (!tAllData.length) { alert('No se encontraron registros TrasCon.'); }
+            renderTTable();
+        }
+    });
+}
+
+function loadTXLSX(file) {
+    document.getElementById('t-drop-zone').classList.add('hidden');
+    document.getElementById('t-content').classList.remove('hidden');
+    document.getElementById('t-kpi-row').innerHTML = '<div class="p-card col-span-3"><p class="text-center text-gray-500">Procesando Excel (una vez), espere...</p></div>';
     const reader = new FileReader();
     reader.onload = function(e) {
-        // Defer heavy parsing so the browser paints the loading message
         setTimeout(function() {
             const data = new Uint8Array(e.target.result);
-            const wb = XLSX.read(data, { type: 'array' });
+            const wb = XLSX.read(data, { type: 'array', cellDates: false });
             const ws = wb.Sheets[wb.SheetNames[0]];
             const aoa = XLSX.utils.sheet_to_json(ws, { header: 1 });
             if (aoa.length < 2) { alert('El archivo está vacío.'); return; }
@@ -1217,9 +1255,9 @@ function loadTFile(file) {
             for (let j = 0; j < tHeaders.length; j++) {
                 if (String(tHeaders[j]).toLowerCase().replace(/[^a-z0-9]/g,'') === 'tipo') { tipoIdx = j; break; }
             }
-            if (tipoIdx === -1) { alert('No se encontró la columna "tipo" en el archivo.'); return; }
-            const ncols = tHeaders.length;
+            if (tipoIdx === -1) { alert('No se encontró la columna "tipo".'); return; }
             tAllData = [];
+            const ncols = tHeaders.length;
             for (let i = 1; i < aoa.length; i++) {
                 const row = aoa[i];
                 if (!row || !row.length) continue;
@@ -1232,6 +1270,9 @@ function loadTFile(file) {
                 }
             }
             if (!tAllData.length) { alert('No se encontraron registros TrasCon.'); }
+            // Cache as CSV for next time
+            var csv = XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(tAllData));
+            try { localStorage.setItem(TCACHE_KEY, csv); } catch(e) {}
             renderTTable();
         }, 50);
     };
@@ -1291,17 +1332,37 @@ function onTSearchInput() {
 
 function exportTExcel() {
     if (!tFilteredData.length) return alert('No hay datos para exportar.');
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(tFilteredData);
+    var wb = XLSX.utils.book_new();
+    var ws = XLSX.utils.json_to_sheet(tFilteredData);
     XLSX.utils.book_append_sheet(wb, ws, 'TrasCon');
     XLSX.writeFile(wb, 'trascon_leonisa_despachos.xlsx');
 }
 
+function exportTCSV() {
+    if (!tFilteredData.length) return alert('No hay datos para exportar.');
+    var csv = XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(tFilteredData));
+    var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'trascon_leonisa_despachos.csv'; a.click();
+}
+
 (function() {
-    const dz = document.getElementById('t-drop-zone');
+    var dz = document.getElementById('t-drop-zone');
     if (dz) {
         dz.addEventListener('dragover', function(e) { e.preventDefault(); });
-        dz.addEventListener('drop', function(e) { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) loadTFile(f); });
+        dz.addEventListener('drop', function(e) { e.preventDefault(); var f = e.dataTransfer.files[0]; if (f) loadTFile(f); });
+    }
+    // Restore cached CSV
+    var cached = null;
+    try { cached = localStorage.getItem(TCACHE_KEY); } catch(e) {}
+    if (cached) {
+        var parsed = Papa.parse(cached, { header: true });
+        if (parsed.data && parsed.data.length) {
+            tHeaders = parsed.meta.fields || Object.keys(parsed.data[0]);
+            tAllData = parsed.data;
+            document.getElementById('t-drop-zone').classList.add('hidden');
+            document.getElementById('t-content').classList.remove('hidden');
+            renderTTable();
+        }
     }
 })();
 </script>
