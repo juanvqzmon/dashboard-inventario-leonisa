@@ -1202,90 +1202,51 @@ let tAllData = [];
 let tFilteredData = [];
 let tHeaders = [];
 let tSearchTimer = null;
-const TCACHE_KEY = 'vmi_trascon_csv';
+const API = '';  // '' for same-origin (backend serves the page)
 
 function loadTFile(file) {
-    const name = file.name.toLowerCase();
-    if (name.endsWith('.csv')) {
-        loadTCSV(file);
-    } else {
-        loadTXLSX(file);
-    }
-}
-
-function loadTCSV(file) {
     document.getElementById('t-drop-zone').classList.add('hidden');
     document.getElementById('t-content').classList.remove('hidden');
-    document.getElementById('t-kpi-row').innerHTML = '<div class="p-card col-span-3"><p class="text-center text-gray-500">Leyendo CSV...</p></div>';
-    Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-            if (!results.data || !results.data.length) { alert('El archivo CSV está vacío.'); return; }
-            tHeaders = results.meta.fields || Object.keys(results.data[0]);
-            const tipoCol = tHeaders.find(function(h) { return h.toLowerCase().replace(/[^a-z0-9]/g,'') === 'tipo'; });
-            if (!tipoCol) { alert('No se encontró la columna "tipo" en el CSV.'); return; }
-            tAllData = [];
-            for (let i = 0; i < results.data.length; i++) {
-                const r = results.data[i];
-                if (String(r[tipoCol] ?? '').toLowerCase().includes('trascon')) {
-                    tAllData.push(r);
-                }
-            }
-            if (!tAllData.length) { alert('No se encontraron registros TrasCon.'); }
-            renderTTable();
-        }
-    });
+    document.getElementById('t-kpi-row').innerHTML = '<div class="p-card col-span-3"><p class="text-center text-gray-500">Subiendo archivo al servidor...</p></div>';
+    var formData = new FormData();
+    formData.append('file', file);
+    fetch(API + '/api/upload/trascon', { method: 'POST', body: formData })
+        .then(function(r) { return r.json(); })
+        .then(function(j) {
+            if (j.error) { alert(j.error); return; }
+            fetchTData();
+        })
+        .catch(function() { alert('Error al conectar con el servidor. Asegurate de que el backend esté corriendo.'); });
 }
 
-function loadTXLSX(file) {
-    document.getElementById('t-drop-zone').classList.add('hidden');
-    document.getElementById('t-content').classList.remove('hidden');
-    document.getElementById('t-kpi-row').innerHTML = '<div class="p-card col-span-3"><p class="text-center text-gray-500">Procesando Excel (una vez), espere...</p></div>';
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        setTimeout(function() {
-            const data = new Uint8Array(e.target.result);
-            const wb = XLSX.read(data, { type: 'array', cellDates: false });
-            const ws = wb.Sheets[wb.SheetNames[0]];
-            const aoa = XLSX.utils.sheet_to_json(ws, { header: 1 });
-            if (aoa.length < 2) { alert('El archivo está vacío.'); return; }
-            tHeaders = aoa[0];
-            let tipoIdx = -1;
-            for (let j = 0; j < tHeaders.length; j++) {
-                if (String(tHeaders[j]).toLowerCase().replace(/[^a-z0-9]/g,'') === 'tipo') { tipoIdx = j; break; }
+function fetchTData(search) {
+    var url = API + '/api/trascon';
+    if (search) url += '?search=' + encodeURIComponent(search);
+    fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data || !data.length) {
+                tAllData = [];
+                tHeaders = [];
+                document.getElementById('t-content').classList.remove('hidden');
+                renderTTable();
+                return;
             }
-            if (tipoIdx === -1) { alert('No se encontró la columna "tipo".'); return; }
-            tAllData = [];
-            const ncols = tHeaders.length;
-            for (let i = 1; i < aoa.length; i++) {
-                const row = aoa[i];
-                if (!row || !row.length) continue;
-                if (String(row[tipoIdx] ?? '').toLowerCase().includes('trascon')) {
-                    const obj = {};
-                    for (let j = 0; j < ncols; j++) {
-                        obj[tHeaders[j]] = j < row.length ? (row[j] ?? '') : '';
-                    }
-                    tAllData.push(obj);
-                }
-            }
-            if (!tAllData.length) { alert('No se encontraron registros TrasCon.'); }
-            // Cache as CSV for next time
-            var csv = XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(tAllData));
-            try { localStorage.setItem(TCACHE_KEY, csv); } catch(e) {}
+            tAllData = data;
+            tHeaders = Object.keys(data[0]);
+            document.getElementById('t-content').classList.remove('hidden');
             renderTTable();
-        }, 50);
-    };
-    reader.readAsArrayBuffer(file);
+        })
+        .catch(function() {});
 }
 
 function renderTTable() {
-    const q = document.getElementById('t-search').value.toLowerCase();
+    var q = document.getElementById('t-search').value.toLowerCase();
     tFilteredData = q ? [] : tAllData;
     if (q) {
-        for (let i = 0; i < tAllData.length; i++) {
-            const r = tAllData[i];
-            for (let j = 0; j < tHeaders.length; j++) {
+        for (var i = 0; i < tAllData.length; i++) {
+            var r = tAllData[i];
+            for (var j = 0; j < tHeaders.length; j++) {
                 if (String(r[tHeaders[j]] ?? '').toLowerCase().includes(q)) {
                     tFilteredData.push(r);
                     break;
@@ -1293,31 +1254,34 @@ function renderTTable() {
             }
         }
     }
-    let cantCol = -1;
-    let refCol = -1;
-    for (let j = 0; j < tHeaders.length; j++) {
-        const h = tHeaders[j].toLowerCase();
-        if (h.includes('cant')) cantCol = j;
+    var cantCol = -1, refCol = -1;
+    for (var j = 0; j < tHeaders.length; j++) {
+        var h = tHeaders[j].toLowerCase();
+        if (h.includes('cant') || h.includes('facturada')) cantCol = j;
         if (h === 'ref' || h.includes('referencia')) refCol = j;
     }
-    let totalCantVal = 0;
-    const refsSet = new Set();
-    for (let i = 0; i < tFilteredData.length; i++) {
-        const r = tFilteredData[i];
+    var totalCantVal = 0;
+    var refsSet = new Set();
+    for (var i = 0; i < tFilteredData.length; i++) {
+        var r = tFilteredData[i];
         if (cantCol !== -1) totalCantVal += Number(r[tHeaders[cantCol]]) || 0;
         if (refCol !== -1) refsSet.add(r[tHeaders[refCol]]);
     }
     document.getElementById('t-kpi-row').innerHTML = '<div class="p-card border-l-4 border-l-blue-500"><p class="font-label-caps text-label-caps text-outline uppercase mb-1">Total Registros</p><p class="text-2xl font-extrabold text-blue-700">' + tFilteredData.length.toLocaleString() + '</p></div><div class="p-card border-l-4 border-l-emerald-500"><p class="font-label-caps text-label-caps text-outline uppercase mb-1">Total Unidades</p><p class="text-2xl font-extrabold text-emerald-600">' + totalCantVal.toLocaleString() + '</p></div><div class="p-card border-l-4 border-l-purple-500"><p class="font-label-caps text-label-caps text-outline uppercase mb-1">Referencias Únicas</p><p class="text-2xl font-extrabold text-purple-600">' + refsSet.size.toLocaleString() + '</p></div>';
     document.getElementById('t-row-count').textContent = tFilteredData.length + ' registros';
-    const thead = document.getElementById('t-thead');
-    if (!thead._built) { let h = ''; for (let j = 0; j < tHeaders.length; j++) h += '<th class="px-3 py-2.5 text-left whitespace-nowrap">' + tHeaders[j] + '</th>'; thead.innerHTML = h; thead._built = true; }
-    const tbody = document.getElementById('t-tbody');
-    let html = '';
-    for (let i = 0; i < tFilteredData.length; i++) {
-        const r = tFilteredData[i];
+    var thead = document.getElementById('t-thead');
+    if (!thead._built && tHeaders.length) {
+        var h = '';
+        for (var j = 0; j < tHeaders.length; j++) h += '<th class="px-3 py-2.5 text-left whitespace-nowrap">' + tHeaders[j] + '</th>';
+        thead.innerHTML = h; thead._built = true;
+    }
+    var tbody = document.getElementById('t-tbody');
+    var html = '';
+    for (var i = 0; i < tFilteredData.length; i++) {
+        var r = tFilteredData[i];
         html += '<tr class="transition-colors">';
-        for (let j = 0; j < tHeaders.length; j++) {
-            const v = String(r[tHeaders[j]] ?? '');
+        for (var j = 0; j < tHeaders.length; j++) {
+            var v = String(r[tHeaders[j]] ?? '');
             html += '<td class="px-3 py-2 border-b border-gray-100 whitespace-nowrap">' + v.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</td>';
         }
         html += '</tr>';
@@ -1327,7 +1291,11 @@ function renderTTable() {
 
 function onTSearchInput() {
     if (tSearchTimer) clearTimeout(tSearchTimer);
-    tSearchTimer = setTimeout(renderTTable, 200);
+    tSearchTimer = setTimeout(function() {
+        var q = document.getElementById('t-search').value;
+        if (q) fetchTData(q);
+        else renderTTable();
+    }, 200);
 }
 
 function exportTExcel() {
@@ -1340,7 +1308,8 @@ function exportTExcel() {
 
 function exportTCSV() {
     if (!tFilteredData.length) return alert('No hay datos para exportar.');
-    var csv = XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(tFilteredData));
+    var ws = XLSX.utils.json_to_sheet(tFilteredData);
+    var csv = XLSX.utils.sheet_to_csv(ws);
     var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'trascon_leonisa_despachos.csv'; a.click();
 }
@@ -1351,19 +1320,8 @@ function exportTCSV() {
         dz.addEventListener('dragover', function(e) { e.preventDefault(); });
         dz.addEventListener('drop', function(e) { e.preventDefault(); var f = e.dataTransfer.files[0]; if (f) loadTFile(f); });
     }
-    // Restore cached CSV
-    var cached = null;
-    try { cached = localStorage.getItem(TCACHE_KEY); } catch(e) {}
-    if (cached) {
-        var parsed = Papa.parse(cached, { header: true });
-        if (parsed.data && parsed.data.length) {
-            tHeaders = parsed.meta.fields || Object.keys(parsed.data[0]);
-            tAllData = parsed.data;
-            document.getElementById('t-drop-zone').classList.add('hidden');
-            document.getElementById('t-content').classList.remove('hidden');
-            renderTTable();
-        }
-    }
+    // Load data from backend on page load
+    fetchTData();
 })();
 </script>
 </body>
