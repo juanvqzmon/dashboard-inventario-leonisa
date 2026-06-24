@@ -1200,38 +1200,40 @@ let tHeaders = [];
 let tSearchTimer = null;
 
 function loadTFile(file) {
+    document.getElementById('t-drop-zone').classList.add('hidden');
+    document.getElementById('t-content').classList.remove('hidden');
+    document.getElementById('t-kpi-row').innerHTML = '<div class="p-card col-span-3"><p class="text-center text-gray-500">Procesando archivo, espere...</p></div>';
     const reader = new FileReader();
     reader.onload = function(e) {
-        const data = new Uint8Array(e.target.result);
-        const wb = XLSX.read(data, { type: 'array' });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        // Use aoa (array of arrays) — fastest way to read
-        const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-        if (aoa.length < 2) { alert('El archivo está vacío.'); return; }
-        tHeaders = aoa[0];
-        let tipoIdx = -1;
-        for (let j = 0; j < tHeaders.length; j++) {
-            if (String(tHeaders[j]).toLowerCase().replace(/[^a-z0-9]/g,'') === 'tipo') { tipoIdx = j; break; }
-        }
-        if (tipoIdx === -1) { alert('No se encontró la columna "tipo" en el archivo.'); return; }
-        tAllData = [];
-        const ncols = tHeaders.length;
-        for (let i = 1; i < aoa.length; i++) {
-            const row = aoa[i];
-            if (!row || !row.length) continue;
-            const v = String(row[tipoIdx] ?? '').toLowerCase();
-            if (v.includes('trascon')) {
-                const obj = {};
-                for (let j = 0; j < ncols; j++) {
-                    obj[tHeaders[j]] = j < row.length ? (row[j] ?? '') : '';
-                }
-                tAllData.push(obj);
+        // Defer heavy parsing so the browser paints the loading message
+        setTimeout(function() {
+            const data = new Uint8Array(e.target.result);
+            const wb = XLSX.read(data, { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const aoa = XLSX.utils.sheet_to_aoa(ws);
+            if (aoa.length < 2) { alert('El archivo está vacío.'); return; }
+            tHeaders = aoa[0];
+            let tipoIdx = -1;
+            for (let j = 0; j < tHeaders.length; j++) {
+                if (String(tHeaders[j]).toLowerCase().replace(/[^a-z0-9]/g,'') === 'tipo') { tipoIdx = j; break; }
             }
-        }
-        tAllData.length === 0 && alert('No se encontraron registros con "TrasCon" en el archivo.');
-        document.getElementById('t-drop-zone').classList.add('hidden');
-        document.getElementById('t-content').classList.remove('hidden');
-        renderTTable();
+            if (tipoIdx === -1) { alert('No se encontró la columna "tipo" en el archivo.'); return; }
+            const ncols = tHeaders.length;
+            tAllData = [];
+            for (let i = 1; i < aoa.length; i++) {
+                const row = aoa[i];
+                if (!row || !row.length) continue;
+                if (String(row[tipoIdx] ?? '').toLowerCase().includes('trascon')) {
+                    const obj = {};
+                    for (let j = 0; j < ncols; j++) {
+                        obj[tHeaders[j]] = j < row.length ? (row[j] ?? '') : '';
+                    }
+                    tAllData.push(obj);
+                }
+            }
+            if (!tAllData.length) { alert('No se encontraron registros TrasCon.'); }
+            renderTTable();
+        }, 50);
     };
     reader.readAsArrayBuffer(file);
 }
