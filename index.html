@@ -567,7 +567,7 @@
                 <h3 class="font-bold text-sm">Despachos TrasCon a Leonisa</h3>
                 <div class="flex items-center gap-4">
                     <span class="text-xs text-gray-400" id="t-row-count">0 registros</span>
-                    <input type="text" id="t-search" class="t-input w-48" placeholder="Buscar..." oninput="renderTTable()"/>
+                    <input type="text" id="t-search" class="t-input w-48" placeholder="Buscar..." oninput="onTSearchInput()"/>
                 </div>
             </div>
             <div class="overflow-x-auto custom-scrollbar" style="max-height:600px">
@@ -671,8 +671,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }, 100);
         }
-        if (page === 'vmi-trascon') {
-            // restore trascon data if saved
+        if (page === 'vmi-trascon' && tAllData.length) {
             setTimeout(() => renderTTable(), 50);
         }
     }
@@ -1199,6 +1198,8 @@ let tAllData = [];
 let tFilteredData = [];
 let tHeaders = [];
 
+let tSearchTimer = null;
+
 function loadTFile(file) {
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -1214,19 +1215,22 @@ function loadTFile(file) {
         if (tAllData.length === 0) { alert('No se encontraron registros con "TrasCon" en la columna "' + tipoCol + '".'); }
         document.getElementById('t-drop-zone').classList.add('hidden');
         document.getElementById('t-content').classList.remove('hidden');
+        lsSave('trascon-data', { allData: tAllData, headers: tHeaders });
         renderTTable();
     };
     reader.readAsArrayBuffer(file);
-    document.getElementById('loading-msg').classList.remove('hidden');
 }
+
+let tKpiCache = '';
 
 function renderTTable() {
     const q = document.getElementById('t-search').value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     tFilteredData = tAllData.filter(r => {
         if (!q) return true;
-        return Object.values(r).some(v => String(v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q));
+        const vals = r.__searchCache || (r.__searchCache = Object.values(r).map(v => String(v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')));
+        return vals.some(v => v.includes(q));
     });
-    // KPIs
+    // KPIs (only rebuild if data changed)
     const totalCant = tFilteredData.reduce((s, r) => {
         const c = tHeaders.find(h => h.toLowerCase().includes('cant'));
         return s + (Number(r[c]) || 0);
@@ -1234,21 +1238,34 @@ function renderTTable() {
     const colRef = tHeaders.find(h => h.toLowerCase() === 'ref' || h.toLowerCase().includes('referencia'));
     const refsSet = new Set();
     if (colRef) tFilteredData.forEach(r => refsSet.add(r[colRef]));
-    document.getElementById('t-kpi-row').innerHTML = `
-        <div class="p-card border-l-4 border-l-blue-500"><p class="font-label-caps text-label-caps text-outline uppercase mb-1">Total Registros</p><p class="text-2xl font-extrabold text-blue-700">${tFilteredData.length.toLocaleString()}</p></div>
-        <div class="p-card border-l-4 border-l-emerald-500"><p class="font-label-caps text-label-caps text-outline uppercase mb-1">Total Unidades</p><p class="text-2xl font-extrabold text-emerald-600">${totalCant.toLocaleString()}</p></div>
-        <div class="p-card border-l-4 border-l-purple-500"><p class="font-label-caps text-label-caps text-outline uppercase mb-1">Referencias Únicas</p><p class="text-2xl font-extrabold text-purple-600">${refsSet.size.toLocaleString()}</p></div>
-    `;
+    const kpiHtml = `<div class="p-card border-l-4 border-l-blue-500"><p class="font-label-caps text-label-caps text-outline uppercase mb-1">Total Registros</p><p class="text-2xl font-extrabold text-blue-700">${tFilteredData.length.toLocaleString()}</p></div><div class="p-card border-l-4 border-l-emerald-500"><p class="font-label-caps text-label-caps text-outline uppercase mb-1">Total Unidades</p><p class="text-2xl font-extrabold text-emerald-600">${totalCant.toLocaleString()}</p></div><div class="p-card border-l-4 border-l-purple-500"><p class="font-label-caps text-label-caps text-outline uppercase mb-1">Referencias Únicas</p><p class="text-2xl font-extrabold text-purple-600">${refsSet.size.toLocaleString()}</p></div>`;
+    if (kpiHtml !== tKpiCache) { document.getElementById('t-kpi-row').innerHTML = kpiHtml; tKpiCache = kpiHtml; }
     document.getElementById('t-row-count').textContent = tFilteredData.length + ' registros';
-    // Header row
+    // Header (one-time)
     const thead = document.getElementById('t-thead');
-    thead.innerHTML = tHeaders.map(h => `<th class="px-3 py-2.5 text-left whitespace-nowrap">${h}</th>`).join('');
-    // Body
+    if (!thead._built) { thead.innerHTML = tHeaders.map(h => `<th class="px-3 py-2.5 text-left whitespace-nowrap">${h}</th>`).join(''); thead._built = true; }
+    // Body — batch DOM using DocumentFragment
     const tbody = document.getElementById('t-tbody');
-    tbody.innerHTML = tFilteredData.map(r => {
-        const cells = tHeaders.map(h => `<td class="px-3 py-2 border-b border-gray-100 whitespace-nowrap">${r[h] ?? ''}</td>`).join('');
-        return `<tr class="transition-colors">${cells}</tr>`;
-    }).join('');
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < tFilteredData.length; i++) {
+        const r = tFilteredData[i];
+        const tr = document.createElement('tr');
+        tr.className = 'transition-colors';
+        for (let j = 0; j < tHeaders.length; j++) {
+            const td = document.createElement('td');
+            td.className = 'px-3 py-2 border-b border-gray-100 whitespace-nowrap';
+            td.textContent = r[tHeaders[j]] ?? '';
+            tr.appendChild(td);
+        }
+        frag.appendChild(tr);
+    }
+    tbody.innerHTML = '';
+    tbody.appendChild(frag);
+}
+
+function onTSearchInput() {
+    if (tSearchTimer) clearTimeout(tSearchTimer);
+    tSearchTimer = setTimeout(renderTTable, 150);
 }
 
 function exportTExcel() {
@@ -1259,35 +1276,21 @@ function exportTExcel() {
     XLSX.writeFile(wb, 'trascon_leonisa_despachos.xlsx');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+(function() {
     const dz = document.getElementById('t-drop-zone');
     if (dz) {
         dz.addEventListener('dragover', e => e.preventDefault());
         dz.addEventListener('drop', e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) loadTFile(f); });
     }
-    // Restore saved
     const saved = lsLoad('trascon-data');
     if (saved && saved.allData && saved.allData.length) {
         tAllData = saved.allData;
         tHeaders = saved.headers || [];
-        if (document.getElementById('t-drop-zone')) {
-            document.getElementById('t-drop-zone').classList.add('hidden');
-            document.getElementById('t-content').classList.remove('hidden');
-            renderTTable();
-        }
+        document.getElementById('t-drop-zone').classList.add('hidden');
+        document.getElementById('t-content').classList.remove('hidden');
+        renderTTable();
     }
-    // Save on load
-    const origLoad = loadTFile;
-    loadTFile = function(f) {
-        origLoad(f);
-        const waitDone = setInterval(() => {
-            if (tAllData.length) {
-                clearInterval(waitDone);
-                lsSave('trascon-data', { allData: tAllData, headers: tHeaders });
-            }
-        }, 300);
-    };
-});
+})();
 </script>
 </body>
 </html>
