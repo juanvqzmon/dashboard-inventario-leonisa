@@ -1205,18 +1205,30 @@ function loadTFile(file) {
         const data = new Uint8Array(e.target.result);
         const wb = XLSX.read(data, { type: 'array' });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
-        if (json.length === 0) { alert('El archivo está vacío.'); return; }
-        tHeaders = Object.keys(json[0]);
-        let tipoCol = tHeaders.find(h => h.toLowerCase().replace(/[^a-z0-9]/g,'') === 'tipo');
-        if (!tipoCol) { alert('No se encontró la columna "tipo" en el archivo.'); return; }
+        // Use aoa (array of arrays) — fastest way to read
+        const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        if (aoa.length < 2) { alert('El archivo está vacío.'); return; }
+        tHeaders = aoa[0];
+        let tipoIdx = -1;
+        for (let j = 0; j < tHeaders.length; j++) {
+            if (String(tHeaders[j]).toLowerCase().replace(/[^a-z0-9]/g,'') === 'tipo') { tipoIdx = j; break; }
+        }
+        if (tipoIdx === -1) { alert('No se encontró la columna "tipo" en el archivo.'); return; }
         tAllData = [];
-        for (let i = 0; i < json.length; i++) {
-            if (String(json[i][tipoCol] ?? '').toLowerCase().includes('trascon')) {
-                tAllData.push(json[i]);
+        const ncols = tHeaders.length;
+        for (let i = 1; i < aoa.length; i++) {
+            const row = aoa[i];
+            if (!row || !row.length) continue;
+            const v = String(row[tipoIdx] ?? '').toLowerCase();
+            if (v.includes('trascon')) {
+                const obj = {};
+                for (let j = 0; j < ncols; j++) {
+                    obj[tHeaders[j]] = j < row.length ? (row[j] ?? '') : '';
+                }
+                tAllData.push(obj);
             }
         }
-        if (tAllData.length === 0) { alert('No se encontraron registros con "TrasCon" en columna "' + tipoCol + '".'); }
+        tAllData.length === 0 && alert('No se encontraron registros con "TrasCon" en el archivo.');
         document.getElementById('t-drop-zone').classList.add('hidden');
         document.getElementById('t-content').classList.remove('hidden');
         renderTTable();
